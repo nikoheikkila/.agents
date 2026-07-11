@@ -1,0 +1,52 @@
+{
+  "version": 3,
+  "skills": {
+    "accessibility": {
+      "source": "addyosmani/web-quality-skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/addyosmani/web-quality-skills.git",
+      "skillPath": "skills/accessibility/SKILL.md",
+      "skillFolderHash": "abdb452337317f5840e4298e46ad07663342dbe8",
+      "installedAt": "2026-04-22T15:39:08.996Z",
+      "updatedAt": "2026-07-11T19:27:53.319Z"
+    },
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/vercel-labs/skills.git",
+      "skillPath": "skills/find-skills/SKILL.md",
+      "skillFolderHash": "76a98a285cb0434f3d39e1a873823556330e398b",
+      "installedAt": "2026-04-22T15:39:12.586Z",
+      "updatedAt": "2026-07-11T19:27:56.210Z"
+    },
+    "performance": {
+      "source": "addyosmani/web-quality-skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/addyosmani/web-quality-skills.git",
+      "skillPath": "skills/performance/SKILL.md",
+      "skillFolderHash": "62de2e9d8439998bd386f06a1c8acb96877f48fe",
+      "installedAt": "2026-05-06T17:09:39.870Z",
+      "updatedAt": "2026-07-11T19:27:54.951Z"
+    }
+  },
+  "dismissed": {
+    "findSkillsPrompt": true
+  },
+  "lastSelectedAgents": [
+    "amp",
+    "antigravity",
+    "cline",
+    "codex",
+    "cursor",
+    "deepagents",
+    "dexto",
+    "firebender",
+    "gemini-cli",
+    "github-copilot",
+    "kimi-cli",
+    "opencode",
+    "warp",
+    "zed",
+    "claude-code"
+  ]
+}
