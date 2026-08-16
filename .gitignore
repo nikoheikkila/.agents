@@ -2,7 +2,10 @@
 !/.gitignore
 !/commands
 
+!/agents
 !/skills
+!/plugins
+!/.claude-plugin
 
 !/settings.json
 !/policy-limits.json

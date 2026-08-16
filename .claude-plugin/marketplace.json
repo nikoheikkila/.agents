@@ -1,0 +1,14 @@
+{
+  "name": "nikoheikkila-agents",
+  "owner": {
+    "name": "Niko Heikkilä",
+    "url": "https://github.com/nikoheikkila"
+  },
+  "plugins": [
+    {
+      "name": "alt-text-generator",
+      "source": "./plugins/alt-text-generator",
+      "description": "Generates screen-reader-compatible alt text for images, with a dedicated Claude Code subagent for non-interactive use."
+    }
+  ]
+}

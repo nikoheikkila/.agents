@@ -1,0 +1,9 @@
+{
+  "name": "alt-text-generator",
+  "version": "1.0.0",
+  "description": "Generates screen-reader-compatible alt text for images, with a dedicated Claude Code subagent for non-interactive use.",
+  "author": {
+    "name": "Niko Heikkilä",
+    "url": "https://github.com/nikoheikkila"
+  }
+}
