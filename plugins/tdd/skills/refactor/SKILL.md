@@ -1,5 +1,5 @@
 ---
-name: tdd-refactor
+name: refactor
 description: >-
   Improve code quality, apply best practices, and enhance design whilst maintaining green tests.
   Use after tests pass and the code needs cleanup, when the user asks to refactor, or when

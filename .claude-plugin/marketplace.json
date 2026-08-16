@@ -9,6 +9,11 @@
       "name": "alt-text-generator",
       "source": "./plugins/alt-text-generator",
       "description": "Generates screen-reader-compatible alt text for images, with a dedicated Claude Code subagent for non-interactive use."
+    },
+    {
+      "name": "tdd",
+      "source": "./plugins/tdd",
+      "description": "Test-driven development workflow skills for the Red-Green-Refactor cycle."
     }
   ]
 }

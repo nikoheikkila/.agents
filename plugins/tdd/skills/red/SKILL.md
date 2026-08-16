@@ -1,5 +1,5 @@
 ---
-name: tdd-red
+name: red
 description: >-
   Guide test-first development by writing failing unit tests from Gherkin (BDD) feature files
   that describe desired behaviour before any implementation exists. Use when starting a new
