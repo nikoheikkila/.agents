@@ -51,6 +51,25 @@ writes durable improvements back into the relevant repo: repo-wide instructions 
 human-facing docs into `README.md`, and skill amendments under `.claude/skills/` (or, when run inside this repo,
 under this repo's own `skills/`/`plugins/`).
 
+## Subagents
+
+`agents/` holds a seven-agent pre-commit pipeline ported from the
+[MinimumCD agentic-CD guide](https://beyond.minimumcd.org/docs/agentic-cd/architecture/agent-configuration/).
+`orchestrator` is the entry point — ask it to start a BDD session and it assembles the minimum context and
+delegates to `implementation` for one scenario at a time. It then stops at the review gate rather than crossing
+it: `/review` invokes `review-orchestrator`, which runs `semantic-review`, `security-review`,
+`performance-review`, and `concurrency-review` in parallel and returns a single pass/block decision as JSON.
+The orchestrator holds the commit until that decision is `pass`.
+
+They reach Claude Code through a whole-directory symlink, created once:
+
+```sh
+ln -s ../.agents/agents ~/.claude/agents
+```
+
+Only `orchestrator` is meant to be invoked directly; the other six expect a context bundle from their parent
+and will not gather one themselves.
+
 ## Vendored Skills
 
 `skills/accessibility`, `skills/performance`, and `skills/find-skills` were installed with the

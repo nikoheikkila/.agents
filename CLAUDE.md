@@ -22,7 +22,7 @@ never loads.
 | `commands/` | Whole-directory symlink `~/.claude/commands -> ../.agents/commands`                 | Edit freely; live immediately, no install step              |
 | `skills/`   | Per-skill symlinks `~/.claude/skills/<name> -> ../../.agents/skills/<name>`         | **Vendored third-party — do not hand-edit** (see below)     |
 | `plugins/`  | GitHub marketplace `nikoheikkila-agents`, installed into `~/.claude/plugins/cache/` | Own authored work goes here; requires push + update         |
-| `agents/`   | Reserved for user-level subagents; currently empty                                  | Git does not track empty dirs — the dir only exists locally |
+| `agents/`   | Whole-directory symlink `~/.claude/agents -> ../.agents/agents`                     | Edit freely; live immediately at next session start         |
 
 ### `Skills/` Is Vendored, Not Authored
 
@@ -38,6 +38,28 @@ npx skills check                          # see which vendored skills have updat
 npx skills update                         # pull them, rewriting skills/ and .skill-lock.json
 npx skills add <owner/repo@skill> -g -y   # install a new one globally
 ```
+
+### `Agents/` Is the Agentic-CD Pipeline
+
+Seven user-level subagents ported from the
+[MinimumCD agentic-CD guide](https://beyond.minimumcd.org/docs/agentic-cd/architecture/agent-configuration/):
+`orchestrator` routes a BDD session and spawns `implementation`, which writes one scenario test-first.
+The review gate is separate: `/review` invokes `review-orchestrator`, which fans out to `semantic-review`,
+`security-review`, `performance-review`, and `concurrency-review`. The orchestrator never spawns the review
+orchestrator — it stops at the gate and hands off.
+
+Two rules keep them honest when editing:
+
+- **Model tiers are prescribed by the source doc**, not chosen freely — haiku for the two orchestrators and
+  performance, sonnet for concurrency, opus for implementation, semantic, and security. Changing one is a
+  deliberate deviation from the guide.
+- **Every agent pins `tools`.** The review agents get `Read` only, so "you do not modify code" is enforced
+  rather than merely requested; the orchestrators use the `Agent(<name>)` allowlist to declare exactly which
+  subagents they may spawn. The chain sits at the default three-layer nesting limit, so
+  `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` below 3 breaks the review gate.
+
+Descriptions do double duty as routing rules: only `orchestrator` invites delegation, and the other six say
+they are invoked by a named parent and need a pre-assembled diff they will not collect themselves.
 
 ### `Plugins/` Is the Authored Surface
 
