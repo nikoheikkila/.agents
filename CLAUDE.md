@@ -84,6 +84,11 @@ claude # then: /plugin marketplace update nikoheikkila-agents
 
 - Skill frontmatter descriptions are written as trigger lists in third person ("Use when the user asks…"), enumerating
   the phrasings that should activate the skill, not summarizing what it does.
+- Command files take the same frontmatter, minus `name` and `paths`: the filename is the command. Always set
+  `description` — without it Claude Code falls back to the first content line, so a body opening with a `## /command`
+  heading leaves the command with its own name as its description and nothing to route on. Side-effecting commands
+  (`/start-session`, `/end-session`) set `disable-model-invocation: true`; the rest stay model-invocable so handoffs
+  like `orchestrator` → `/review` still fire.
 - Subagent frontmatter pins `tools`, `model`, `skills`, and `effort` explicitly (see
   `plugins/alt-text-generator/agents/alt-text-generator.md`); agents delegate their substance to a skill rather than
   restating it.

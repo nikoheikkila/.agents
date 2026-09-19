@@ -51,6 +51,22 @@ writes durable improvements back into the relevant repo: repo-wide instructions 
 human-facing docs into `README.md`, and skill amendments under `.claude/skills/` (or, when run inside this repo,
 under this repo's own `skills/`/`plugins/`).
 
+The other four commands drive the agentic-CD pipeline in `agents/`. They are deliberately thin — the rules they route
+to live in the subagent definitions, not in the command files:
+
+- `commands/start-session.md` → `/start-session [scenario]` — hands the scenario to the `orchestrator` subagent, which
+  assembles the minimum context and delegates to `implementation`.
+- `commands/review.md` → `/review` — injects the staged diff with an `` !`git diff --cached` `` block and spawns
+  `review-orchestrator`, returning its pass/block JSON verbatim.
+- `commands/fix.md` → `/fix [failing-test]` — enters pipeline-restore mode and routes the failure to the
+  `orchestrator`.
+- `commands/end-session.md` → `/end-session` — verifies every gate, writes the under-150-word context summary, and
+  commits.
+
+`/start-session` and `/end-session` carry `disable-model-invocation: true` — type those yourself. `/review` and `/fix`
+stay model-invocable, because the orchestrator hands off to `/review` and a red pipeline should pull in `/fix` without
+being asked.
+
 ## Subagents
 
 `agents/` holds a seven-agent pre-commit pipeline ported from the

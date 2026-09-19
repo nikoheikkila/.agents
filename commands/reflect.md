@@ -1,3 +1,7 @@
+---
+description: Reflect on the current or a past session and write durable improvements back into the repo. Use when the user asks to reflect, capture lessons learned, record friction from this session, or update repo instructions and docs after finishing work.
+---
+
 # Reflect and Learn from Current or Past Context
 
 When this command runs, follow the steps below:
