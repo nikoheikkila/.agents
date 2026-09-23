@@ -14,7 +14,7 @@ Output verbosity: return exactly the JSON schema below. No prose before or after
 
 Context passed to each subagent - minimum necessary only:
 
-- Semantic agent: staged diff + BDD scenario
+- Semantic agent: staged diff + summarised intent from the plan
 - Security agent: staged diff only
 - Performance agent: staged diff + feature description (performance budgets only)
 - Concurrency agent: staged diff only

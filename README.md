@@ -71,7 +71,8 @@ being asked.
 
 `agents/` holds a seven-agent pre-commit pipeline ported from the
 [MinimumCD agentic-CD guide](https://beyond.minimumcd.org/docs/agentic-cd/architecture/agent-configuration/).
-`orchestrator` is the entry point — ask it to start a BDD session and it assembles the minimum context and
+`orchestrator` is the entry point — ask it to start working on an implementation from a plan,
+and it assembles the minimum context and
 delegates to `implementation` for one scenario at a time. It then stops at the review gate rather than crossing
 it: `/review` invokes `review-orchestrator`, which runs `semantic-review`, `security-review`,
 `performance-review`, and `concurrency-review` in parallel and returns a single pass/block decision as JSON.

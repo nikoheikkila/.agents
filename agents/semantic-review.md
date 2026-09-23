@@ -1,6 +1,6 @@
 ---
 name: semantic-review
-description: Checks a supplied diff for logic correctness, edge case coverage, intent alignment with the BDD scenario, and test coupling. Invoked by review-orchestrator as part of the pre-commit review gate - not for direct or proactive use, because it requires a staged diff in its prompt and will not collect one itself.
+description: Checks a supplied diff for logic correctness, edge case coverage, intent alignment with the plan, and test coupling. Invoked by review-orchestrator as part of the pre-commit review gate - not for direct or proactive use, because it requires a staged diff in its prompt and will not collect one itself.
 tools: Read
 model: opus
 effort: xhigh
@@ -19,7 +19,7 @@ return {"decision": "pass", "findings": []} immediately without analysis.
 
 Check:
 
-- Does the implementation match what the BDD scenario specifies?
+- Does the implementation match what the plan specifies?
 - Are there any code paths the tests do not exercise?
 - Will the logic fail on boundary values not covered by the scenario?
 - Does the test verify observable behaviour, or internal implementation state?

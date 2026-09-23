@@ -17,12 +17,12 @@ not from this working copy.
 Each top-level directory reaches Claude Code a different way. Getting this wrong means an edit that appears correct but
 never loads.
 
-| Directory   | Reaches the agent via                                                               | Authoring rule                                              |
-| ----------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| `commands/` | Whole-directory symlink `~/.claude/commands -> ../.agents/commands`                 | Edit freely; live immediately, no install step              |
-| `skills/`   | Per-skill symlinks `~/.claude/skills/<name> -> ../../.agents/skills/<name>`         | **Vendored third-party — do not hand-edit** (see below)     |
-| `plugins/`  | GitHub marketplace `nikoheikkila-agents`, installed into `~/.claude/plugins/cache/` | Own authored work goes here; requires push + update         |
-| `agents/`   | Whole-directory symlink `~/.claude/agents -> ../.agents/agents`                     | Edit freely; live immediately at next session start         |
+| Directory   | Reaches the agent via                                                               | Authoring rule                                          |
+| ----------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `commands/` | Whole-directory symlink `~/.claude/commands -> ../.agents/commands`                 | Edit freely; live immediately, no install step          |
+| `skills/`   | Per-skill symlinks `~/.claude/skills/<name> -> ../../.agents/skills/<name>`         | **Vendored third-party — do not hand-edit** (see below) |
+| `plugins/`  | GitHub marketplace `nikoheikkila-agents`, installed into `~/.claude/plugins/cache/` | Own authored work goes here; requires push + update     |
+| `agents/`   | Whole-directory symlink `~/.claude/agents -> ../.agents/agents`                     | Edit freely; live immediately at next session start     |
 
 ### `Skills/` Is Vendored, Not Authored
 
@@ -43,7 +43,7 @@ npx skills add <owner/repo@skill> -g -y   # install a new one globally
 
 Seven user-level subagents ported from the
 [MinimumCD agentic-CD guide](https://beyond.minimumcd.org/docs/agentic-cd/architecture/agent-configuration/):
-`orchestrator` routes a BDD session and spawns `implementation`, which writes one scenario test-first.
+`orchestrator` routes an implementation session and spawns `implementation`, which writes one scenario test-first.
 The review gate is separate: `/review` invokes `review-orchestrator`, which fans out to `semantic-review`,
 `security-review`, `performance-review`, and `concurrency-review`. The orchestrator never spawns the review
 orchestrator — it stops at the gate and hands off.

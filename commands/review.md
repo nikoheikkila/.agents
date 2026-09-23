@@ -3,9 +3,9 @@ description: Run the pre-commit review gate on the staged diff. Use when the use
 allowed-tools: Bash(git diff:*), Agent(review-orchestrator)
 ---
 
-Staged diff under review:
+Fetch the staged diff under review:
 
-```!
+```bash
 git diff --cached
 ```
 
@@ -14,7 +14,7 @@ Run the pre-commit review gate:
 1. If the diff above is empty, stop and report that nothing is staged.
 2. Assemble the review orchestrator's context in this order:
    a. Feature description [stable within this feature - often cached]
-   b. Current BDD scenario [changes per session]
+   b. Current plan [changes per session]
    c. The staged diff above [changes per call]
 3. Spawn the `review-orchestrator` subagent with only this assembled context.
    Do not pass the full session conversation or implementation agent history.
@@ -23,4 +23,4 @@ Run the pre-commit review gate:
 5. If "decision" is "block", pass the findings array to the `orchestrator` subagent
    for routing back to `implementation`. Include only the findings, not the full
    review context.
-6. Do not proceed to commit until /review returns {"decision": "pass"}.
+6. Do not proceed to commit until `/review` returns {"decision": "pass"}.

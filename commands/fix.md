@@ -13,5 +13,5 @@ Failure to restore: $ARGUMENTS
    failure identified above. The orchestrator owns the restore-mode rules and routing
    to `implementation`; do not assemble that context here and do not invoke
    `implementation` directly.
-3. Run /review on the fix. Pass only the fix diff, not the restore session history.
+3. Run `/review` on the fix. Pass only the fix diff, not the restore session history.
 4. Confirm the pipeline is green. Exit restore mode and return to normal session flow.
