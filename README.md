@@ -82,6 +82,8 @@ and it assembles the minimum context and runs one TDD cycle per scenario, in seq
 
 Each phase agent returns one minimal JSON object — `status` (`done`, `concern`, or `context_needed`) plus
 repo-relative paths and the test command, never file contents or logs — so the orchestrator's context stays small.
+The orchestrator never edits a file itself: tests and behaviour go through the three phase agents, and anything
+else (config, manifests, docs) goes to a `general-purpose` subagent. Its Bash use is limited to running tests and git.
 Between phases the orchestrator re-runs each agent's test command itself, reading only the exit code and a short tail, and it hashes the Red test files so a
 later phase that edits a test is caught and re-run. The phase agents preload the matching `tdd` plugin skill, so
 install that plugin (see [Installation](#installation)) before using the pipeline.
