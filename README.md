@@ -55,7 +55,7 @@ The other four commands drive the agentic-CD pipeline in `agents/`. They are del
 to live in the subagent definitions, not in the command files:
 
 - `commands/start-session.md` → `/start-session [scenario]` — hands the scenario to the `orchestrator` subagent, which
-  assembles the minimum context and delegates to `implementation`.
+  assembles the minimum context and runs the `tdd-red` → `tdd-green` → `tdd-refactor` cycle for each scenario.
 - `commands/review.md` → `/review` — injects the staged diff with an `` !`git diff --cached` `` block and spawns
   `review-orchestrator`, returning its pass/block JSON verbatim.
 - `commands/fix.md` → `/fix [failing-test]` — enters pipeline-restore mode and routes the failure to the
@@ -69,12 +69,24 @@ being asked.
 
 ## Subagents
 
-`agents/` holds a seven-agent pre-commit pipeline ported from the
+`agents/` holds a nine-agent pre-commit pipeline adapted from the
 [MinimumCD agentic-CD guide](https://beyond.minimumcd.org/docs/agentic-cd/architecture/agent-configuration/).
 `orchestrator` is the entry point — ask it to start working on an implementation from a plan,
-and it assembles the minimum context and
-delegates to `implementation` for one scenario at a time. It then stops at the review gate rather than crossing
-it: `/review` invokes `review-orchestrator`, which runs `semantic-review`, `security-review`,
+and it assembles the minimum context and runs one TDD cycle per scenario, in sequence:
+
+| Agent          | Phase                                         | Model  | Effort |
+| -------------- | --------------------------------------------- | ------ | ------ |
+| `tdd-red`      | Write one failing acceptance test             | sonnet | low    |
+| `tdd-green`    | Write the minimum code to make it pass        | opus   | high   |
+| `tdd-refactor` | Simplify the design while keeping tests green | opus   | medium |
+
+Each phase agent returns one minimal JSON object — `status` (`done`, `concern`, or `context_needed`) plus
+repo-relative paths and the test command, never file contents or logs — so the orchestrator's context stays small.
+Between phases the orchestrator re-runs each agent's test command itself, reading only the exit code and a short tail, and it hashes the Red test files so a
+later phase that edits a test is caught and re-run. The phase agents preload the matching `tdd` plugin skill, so
+install that plugin (see [Installation](#installation)) before using the pipeline.
+
+After the last scenario the orchestrator stops at the review gate rather than crossing it: `/review` invokes `review-orchestrator`, which runs `semantic-review`, `security-review`,
 `performance-review`, and `concurrency-review` in parallel and returns a single pass/block decision as JSON.
 The orchestrator holds the commit until that decision is `pass`.
 
@@ -84,7 +96,7 @@ They reach Claude Code through a whole-directory symlink, created once:
 ln -s ../.agents/agents ~/.claude/agents
 ```
 
-Only `orchestrator` is meant to be invoked directly; the other six expect a context bundle from their parent
+Only `orchestrator` is meant to be invoked directly; the other eight expect a context bundle from their parent
 and will not gather one themselves.
 
 ## Vendored Skills

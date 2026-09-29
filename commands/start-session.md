@@ -12,8 +12,8 @@ Delegate to the `orchestrator` subagent. Pass it only:
 - The prior session summary, if one exists
 
 The orchestrator owns context assembly, the context hygiene test, and routing to
-`implementation`. Do not assemble that context here and do not invoke `implementation`
-directly.
+the TDD phase agents. Do not assemble that context here and do not invoke `tdd-red`,
+`tdd-green`, or `tdd-refactor` directly.
 
 Present the orchestrator's assembled context to the user for confirmation before
 implementation begins.

@@ -41,9 +41,12 @@ npx skills add <owner/repo@skill> -g -y   # install a new one globally
 
 ### `Agents/` Is the Agentic-CD Pipeline
 
-Seven user-level subagents ported from the
+Nine user-level subagents adapted from the
 [MinimumCD agentic-CD guide](https://beyond.minimumcd.org/docs/agentic-cd/architecture/agent-configuration/):
-`orchestrator` routes an implementation session and spawns `implementation`, which writes one scenario test-first.
+`orchestrator` routes an implementation session and, for each scenario, spawns `tdd-red` (failing test),
+`tdd-green` (minimum code), and `tdd-refactor` (simplest design) in sequence.
+The phase agents preload the `tdd:red`, `tdd:green`, and
+`tdd:refactor` skills from `plugins/tdd`, so that plugin must be installed for them to load their rules.
 The review gate is separate: `/review` invokes `review-orchestrator`, which fans out to `semantic-review`,
 `security-review`, `performance-review`, and `concurrency-review`. The orchestrator never spawns the review
 orchestrator — it stops at the gate and hands off.
@@ -51,14 +54,15 @@ orchestrator — it stops at the gate and hands off.
 Two rules keep them honest when editing:
 
 - **Model tiers are prescribed by the source doc**, not chosen freely — haiku for the two orchestrators and
-  performance, sonnet for concurrency, opus for implementation, semantic, and security. Changing one is a
-  deliberate deviation from the guide.
+  performance, sonnet for concurrency, opus for semantic and security. Changing one is a deliberate deviation
+  from the guide. The TDD split is one such deviation: sonnet/low for `tdd-red`, opus/high for `tdd-green`,
+  opus/medium for `tdd-refactor`.
 - **Every agent pins `tools`.** The review agents get `Read` only, so "you do not modify code" is enforced
   rather than merely requested; the orchestrators use the `Agent(<name>)` allowlist to declare exactly which
   subagents they may spawn. The chain sits at the default three-layer nesting limit, so
   `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` below 3 breaks the review gate.
 
-Descriptions do double duty as routing rules: only `orchestrator` invites delegation, and the other six say
+Descriptions do double duty as routing rules: only `orchestrator` invites delegation, and the other eight say
 they are invoked by a named parent and need a pre-assembled diff they will not collect themselves.
 
 ### `Plugins/` Is the Authored Surface
