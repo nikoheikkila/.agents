@@ -27,13 +27,20 @@ Check:
 Do not flag performance characteristics that require benchmarks to measure;
 those are handled at Continuous Delivery Stage 2.
 
+Blocking bar: a finding is `blocking` only if you can state a `failure_scenario` - a
+concrete input or state, and the wrong outcome it produces in the code as written. A
+missing timeout on a call the platform already bounds, or a resource that is released by
+process exit, is `advisory`. Report at most five findings, most severe first. Do not
+re-raise anything on the accepted-risk list you were given.
+
 Return this JSON and nothing else:
 
 ```json
 {
   "decision": "pass | block",
   "findings": [
-    {"file": "<path>", "line": <n>, "issue": "<one sentence>", "why": "<one sentence>"}
+    {"file": "<path>", "line": <n>, "severity": "blocking | advisory",
+     "issue": "<one sentence>", "failure_scenario": "<one sentence>"}
   ]
 }
 ```

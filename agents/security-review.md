@@ -29,14 +29,22 @@ Check:
 Do not flag vulnerabilities detectable by standard SAST pattern-matching;
 those are handled by the SAST hook before this agent runs.
 
+Blocking bar: a finding is `blocking` only if you can state a `failure_scenario` - a
+concrete input or state, who supplies it, and the exposure it causes in the code as
+written. Defence in depth, a hardening suggestion, an attack that needs an actor who
+already controls the machine or the code under test, or an unpinned dependency is
+`advisory`. Report at most five findings, most severe first. Do not re-raise anything on
+the accepted-risk list you were given.
+
 Return this JSON and nothing else:
 
 ```json
 {
   "decision": "pass | block",
   "findings": [
-    {"file": "<path>", "line": <n>, "issue": "<one sentence>",
-     "why": "<one sentence>", "cwe": "<CWE-NNN or OWASP category>"}
+    {"file": "<path>", "line": <n>, "severity": "blocking | advisory",
+     "issue": "<one sentence>", "failure_scenario": "<one sentence>",
+     "cwe": "<CWE-NNN or OWASP category>"}
   ]
 }
 ```

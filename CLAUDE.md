@@ -17,14 +17,19 @@ not from this working copy.
 Each top-level directory reaches Claude Code a different way. Getting this wrong means an edit that appears correct but
 never loads.
 
-| Directory   | Reaches the agent via                                                               | Authoring rule                                          |
-| ----------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| `commands/` | Whole-directory symlink `~/.claude/commands -> ../.agents/commands`                 | Edit freely; live immediately, no install step          |
-| `skills/`   | Per-skill symlinks `~/.claude/skills/<name> -> ../../.agents/skills/<name>`         | **Vendored third-party — do not hand-edit** (see below) |
-| `plugins/`  | GitHub marketplace `nikoheikkila-agents`, installed into `~/.claude/plugins/cache/` | Own authored work goes here; requires push + update     |
-| `agents/`   | Whole-directory symlink `~/.claude/agents -> ../.agents/agents`                     | Edit freely; live immediately at next session start     |
+| Directory   | Reaches the agent via                                                               | Authoring rule                                      |
+| ----------- | ----------------------------------------------------------------------------------- | --------------------------------------------------- |
+| `commands/` | Whole-directory symlink `~/.claude/commands -> ../.agents/commands`                 | Edit freely; live immediately, no install step      |
+| `skills/`   | Per-skill symlinks `~/.claude/skills/<name> -> ../../.agents/skills/<name>`         | Vendored: do not hand-edit. Authored: `review` only |
+| `plugins/`  | GitHub marketplace `nikoheikkila-agents`, installed into `~/.claude/plugins/cache/` | Own authored work goes here; requires push + update |
+| `agents/`   | Whole-directory symlink `~/.claude/agents -> ../.agents/agents`                     | Edit freely; live immediately at next session start |
 
-### `Skills/` Is Vendored, Not Authored
+### `Skills/` Is Mostly Vendored
+
+`review` is the one authored skill here: the pre-commit review gate, with its `scripts/review-diff.sh` in the skill's
+`scripts/` directory. It is not in `.skill-lock.json`, so `npx skills update` should leave it alone, but every new skill needs
+its own symlink (`ln -s ../../.agents/skills/<name> ~/.claude/skills/<name>`) before Claude Code sees it. The rest of
+this section is about the vendored ones.
 
 `accessibility`, `performance`, and `find-skills` were installed with the Skills CLI (`npx skills`) and are tracked in
 `.skill-lock.json` with a `skillFolderHash` per skill. Local edits will be clobbered by `npx skills update`. Upstream
@@ -53,10 +58,10 @@ orchestrator — it stops at the gate and hands off.
 
 Two rules keep them honest when editing:
 
-- **Model tiers are prescribed by the source doc**, not chosen freely — haiku for the two orchestrators and
+- **Model tiers are prescribed by the source doc**, not chosen freely — haiku for the review orchestrator and
   performance, sonnet for concurrency, opus for semantic and security. Changing one is a deliberate deviation
-  from the guide. The TDD split is one such deviation: sonnet/low for `tdd-red`, opus/high for `tdd-green`,
-  opus/medium for `tdd-refactor`.
+  from the guide. Two exist: the TDD split (sonnet/low for `tdd-red`, opus/high for `tdd-green`, opus/medium for
+  `tdd-refactor`), and `orchestrator` on sonnet instead of haiku.
 - **Every agent pins `tools`.** The review agents get `Read` only, so "you do not modify code" is enforced
   rather than merely requested; the orchestrators use the `Agent(<name>)` allowlist to declare exactly which
   subagents they may spawn. The chain sits at the default three-layer nesting limit, so
@@ -64,6 +69,27 @@ Two rules keep them honest when editing:
 
 Descriptions do double duty as routing rules: only `orchestrator` invites delegation, and the other eight say
 they are invoked by a named parent and need a pre-assembled diff they will not collect themselves.
+
+### The Review Gate Has to Converge
+
+- **`block` needs a `failure_scenario`.** Every finding carries `severity: blocking | advisory`, and only a
+  finding that names a concrete input or state and the wrong outcome in the code as written is `blocking`.
+  `review-orchestrator` sets `decision` itself from the severities and ignores the `decision` an agent returned.
+  Advisory findings go into the pull request description; they do not trigger a fix round.
+- **Rounds are full, then delta, at most three.** The skill's `scripts/review-diff.sh` writes the diff to a file (lockfiles
+  excluded, because an 80 KB diff does not fit in a prompt) and records the index tree; `--delta` produces only
+  what the fixes changed. Delta rounds check that each previous blocker closed and that the delta added nothing
+  new. Round 3 still blocking goes to the user, not to a fourth round.
+- **The caller triages before routing.** Verify each blocking finding against the code or the platform docs, drop
+  the ones whose scenario does not hold, and batch the ones that need a product decision into one question. The
+  accepted-risk list travels with every round so a settled concern is not raised again.
+- **Move the real-environment facts left.** The orchestrator orders scenarios boundary-first (the thinnest slice
+  that runs across the real CI, service, or runtime boundary comes first), adds risk scenarios (empty input,
+  each failure path reported once, untrusted text in markup, temp resources), and runs the production build and
+  end-to-end command before it hands off to the gate.
+- **An orchestrator run is a chunk, not a session.** At most three TDD cycles or one fix round per run, ending in
+  a JSON checkpoint with `git_status` and `not_done`. The caller verifies the checkpoint, so a claim like "fixed"
+  is only as good as the evidence attached to it.
 
 ### `Plugins/` Is the Authored Surface
 

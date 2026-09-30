@@ -51,13 +51,12 @@ writes durable improvements back into the relevant repo: repo-wide instructions 
 human-facing docs into `README.md`, and skill amendments under `.claude/skills/` (or, when run inside this repo,
 under this repo's own `skills/`/`plugins/`).
 
-The other four commands drive the agentic-CD pipeline in `agents/`. They are deliberately thin — the rules they route
+The review gate is the skill `skills/review` (invoked as `/review`); see [How the gate converges](#how-the-gate-converges).
+The three commands here drive the agentic-CD pipeline in `agents/`. They are deliberately thin — the rules they route
 to live in the subagent definitions, not in the command files:
 
 - `commands/start-session.md` → `/start-session [scenario]` — hands the scenario to the `orchestrator` subagent, which
   assembles the minimum context and runs the `tdd-red` → `tdd-green` → `tdd-refactor` cycle for each scenario.
-- `commands/review.md` → `/review` — injects the staged diff with an `` !`git diff --cached` `` block and spawns
-  `review-orchestrator`, returning its pass/block JSON verbatim.
 - `commands/fix.md` → `/fix [failing-test]` — enters pipeline-restore mode and routes the failure to the
   `orchestrator`.
 - `commands/end-session.md` → `/end-session` — verifies every gate, writes the under-150-word context summary, and
@@ -92,6 +91,21 @@ After the last scenario the orchestrator stops at the review gate rather than cr
 `performance-review`, and `concurrency-review` in parallel and returns a single pass/block decision as JSON.
 The orchestrator holds the commit until that decision is `pass`.
 
+### How the Gate Converges
+
+- Findings are `blocking` or `advisory`. Only a finding that names a concrete `failure_scenario` in the code as
+  written is blocking, and `review-orchestrator` derives the decision from the severities. Advisory findings are
+  listed for the pull request description and do not cause a fix round.
+- Round 1 reviews the whole staged diff. Later rounds review only the delta since the previous round, checking that
+  the earlier blockers closed and nothing new broke. After round 3 the remaining findings go to the user.
+- The skill's `scripts/review-diff.sh [--delta]` prepares each round's diff: it writes it to a file
+  (lockfiles excluded) and records the index tree for the next delta. Reviewers read the file, so the diff can be any size.
+- Before the first round the orchestrator runs the production build and the end-to-end command, and the plan puts
+  the scenario that crosses the real boundary first. Facts only the real environment shows are cheaper to meet
+  there than as a blocking finding.
+- An orchestrator run is a chunk of at most three TDD cycles that ends in a JSON checkpoint. Check it with
+  `git status --short` and the test command before you start the next chunk.
+
 They reach Claude Code through a whole-directory symlink, created once:
 
 ```sh
@@ -101,7 +115,17 @@ ln -s ../.agents/agents ~/.claude/agents
 Only `orchestrator` is meant to be invoked directly; the other eight expect a context bundle from their parent
 and will not gather one themselves.
 
-## Vendored Skills
+## Skills
+
+`skills/review` is authored here: it prepares the staged diff with its bundled `scripts/review-diff.sh`, spawns
+`review-orchestrator`, triages blocking findings, and runs up to three rounds (full, then delta). It reaches Claude Code
+through a per-skill symlink, created once (the review subagents it calls come from the `agents/` symlink above):
+
+```sh
+ln -s ../../.agents/skills/review ~/.claude/skills/review
+```
+
+### Vendored Skills
 
 `skills/accessibility`, `skills/performance`, and `skills/find-skills` were installed with the
 [Skills CLI](https://github.com/vercel-labs/skills) from `addyosmani/web-quality-skills` and `vercel-labs/skills`, and

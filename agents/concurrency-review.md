@@ -27,13 +27,20 @@ Check:
 Do not flag thread safety issues that null-safe type systems or language
 immutability guarantees already prevent.
 
+Blocking bar: a finding is `blocking` only if you can state a `failure_scenario` - a
+concrete interleaving or ordering, and the wrong outcome it produces in the code as
+written. A hypothetical second caller that the code's lifecycle never produces is
+`advisory`. Report at most five findings, most severe first. Do not re-raise anything on
+the accepted-risk list you were given.
+
 Return this JSON and nothing else:
 
 ```json
 {
   "decision": "pass | block",
   "findings": [
-    {"file": "<path>", "line": <n>, "issue": "<one sentence>", "why": "<one sentence>"}
+    {"file": "<path>", "line": <n>, "severity": "blocking | advisory",
+     "issue": "<one sentence>", "failure_scenario": "<one sentence>"}
   ]
 }
 ```
