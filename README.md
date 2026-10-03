@@ -94,8 +94,8 @@ The orchestrator holds the commit until that decision is `pass`.
 ### How the Gate Converges
 
 - Findings are `blocking` or `advisory`. Only a finding that names a concrete `failure_scenario` in the code as
-  written is blocking, and `review-orchestrator` derives the decision from the severities. Advisory findings are
-  listed for the pull request description and do not cause a fix round.
+  written is blocking, and `review-orchestrator` derives the decision from the severities. Advisory findings never
+  block. The cheap in-scope ones are fixed before the commit and the rest are listed for the pull request description.
 - Round 1 reviews the whole staged diff. Later rounds review only the delta since the previous round, checking that
   the earlier blockers closed and nothing new broke. After round 3 the remaining findings go to the user.
 - The skill's `scripts/review-diff.sh [--delta]` prepares each round's diff: it writes it to a file
@@ -118,18 +118,23 @@ and will not gather one themselves.
 ## Skills
 
 `skills/review` is authored here: it prepares the staged diff with its bundled `scripts/review-diff.sh`, spawns
-`review-orchestrator`, triages blocking findings, and runs up to three rounds (full, then delta). It reaches Claude Code
-through a per-skill symlink, created once (the review subagents it calls come from the `agents/` symlink above):
+`review-orchestrator`, triages blocking findings, and runs up to three rounds (full, then delta). On a pass it fixes
+the cheap, in-scope advisory findings (stale docs, dead code, missing tests) before the commit and defers the rest.
+
+Every skill reaches Claude Code through one whole-directory symlink, created once (the review subagents come from the
+`agents/` symlink above):
 
 ```sh
-ln -s ../../.agents/skills/review ~/.claude/skills/review
+ln -s ../.agents/skills ~/.claude/skills
 ```
+
+`skills/synced/` is written by the claude.ai skill sync and is git-ignored.
 
 ### Vendored Skills
 
 `skills/accessibility`, `skills/performance`, and `skills/find-skills` were installed with the
 [Skills CLI](https://github.com/vercel-labs/skills) from `addyosmani/web-quality-skills` and `vercel-labs/skills`, and
-are tracked in `.skill-lock.json`. They reach Claude Code via per-skill symlinks into `~/.claude/skills/`.
+are tracked in `.skill-lock.json`.
 
 Do not hand-edit these — a future `npx skills update` will overwrite local changes. To check for or pull updates:
 

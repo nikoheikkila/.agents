@@ -38,8 +38,16 @@ fixes changed, and only findings with a concrete failure scenario block.
    Do not pass the full session conversation or TDD agent history.
 4. `review-orchestrator` returns JSON. Parse the JSON directly; do not re-summarize
    its findings in prose.
-5. If `decision` is `pass`, list the `advisory` findings once, as a short list for the pull
-   request description, and continue. Do not fix advisory findings unless the user asks.
+5. If `decision` is `pass`, sort the `advisory` findings into two groups:
+   - **Fix now**: cheap and inside the change's own scope. Docs or instructions that the
+     diff made stale, dead code or parameters the diff left behind, and a missing test for
+     behaviour the change states. Users asked for these to be fixed after nearly every gate,
+     so fix them by default. Route them through the `orchestrator` in one fix round before
+     the commit, then run one `--delta` round. If the repository's instructions say
+     otherwise, follow them
+   - **Defer**: hardening, design opinions, or anything outside the change's scope. List
+     these once, as a short list for the pull request description or a follow-up issue
+   Tell the user which group each advisory went into, in one line each.
 6. If `decision` is `block`, triage the `blocking` findings before routing anything:
    - Check each against the code or the platform's documented behaviour. A finding whose
      `failure_scenario` does not hold is dropped and added to the accepted-risk list

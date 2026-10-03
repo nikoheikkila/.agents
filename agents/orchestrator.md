@@ -44,6 +44,14 @@ caller has already confirmed the scope; do not ask for the go-ahead again.
 - Your first action after assembling context is to spawn `tdd-red` for the first
   scenario, or the phase agent that owns the work you were given. Plans go in one
   sentence, not a report
+- Never end your turn while an agent you spawned is still running. Wait for its result,
+  verify it, and only then dispatch the next phase or write the checkpoint. A checkpoint
+  written while a child is still running reports work that has not happened, and the
+  caller has to redo your verification. If you are told that a child is running in the
+  background, wait for its completion notification before you do anything else
+- A checkpoint whose `done` is empty and whose `git_status` is unchanged since you
+  started is not a checkpoint. Return it only as `blocked`, with a question that has
+  no safe default
 - Work in chunks of at most three TDD cycles (or one review-fix round) per run. After
   the last cycle of the chunk, stop and return a checkpoint; the caller starts the next
   chunk with your checkpoint as the prior session summary. This keeps your context small
@@ -65,9 +73,15 @@ Return checkpoints in this shape, not as prose:
   "not_done": ["<anything requested and not finished, one line each>"],
   "git_status": "<output of git status --short, trimmed to the changed paths>",
   "debt": ["<relayed from the phase agents, at most three>"],
+  "assumptions": ["<each default you applied instead of asking, one line each>"],
   "questions": [{"question": "<one sentence>", "default": "<recommended answer>"}]
 }
 ```
+
+Verifying a command: judge it by its exit code, never by its tail. `cmd | tail` reports
+the exit code of `tail`, and an empty diff looks like a pass. Run
+`cmd > <log> 2>&1; echo "exit=$?"; tail -n 20 <log>`. A task runner that says a task is
+"up to date" or "skipped" did not run it, so force it before you count it as green.
 
 ## Scenario Planning
 
@@ -88,10 +102,20 @@ saves whole review rounds later.
    - untrusted text interpolated into markup, a URL, a path, or a shell command
    - a temporary resource, asserting it is created unpredictably and released on success
      and on failure
-3. Questions. Ask the caller at most one batch, each question with a recommended default,
-   and before the first cycle. Include any feasibility problem you can already see (an
-   output format the target cannot display, an API that needs a permission). Anything you can
-   settle from the code or the docs, settle yourself
+3. Stale plans. When the plan comes from an issue or a ticket, check every item
+   against the current code before planning. Grep for the named symbols (line numbers and
+   commit hashes in issues drift), and run `git log --oneline --grep "#<n>"`. Put items
+   an earlier commit already finished in `done`, with that commit's hash. Name any
+   dependency on another open issue, and keep to this issue's scope
+4. Questions. First read the repository's instruction file (`AGENTS.md` or `CLAUDE.md`)
+   for standing answers, and apply them without asking. Ask only a question that has no
+   safe default, or whose answer changes the scope (a breaking change, a dependency on
+   other work, a product trade-off). For everything else, apply the recommended default
+   and list it under `assumptions`. Never ask whether you may run a test, build or
+   verification command. Ask at most one batch, before the first cycle. Include any
+   feasibility problem you can already see (an output format the target cannot display,
+   an API that needs a permission). Anything you can settle from the code or the docs,
+   settle yourself
 
 ## Session Context
 
@@ -135,6 +159,18 @@ is empty.
    `git update-index --cacheinfo 100644,<baseline hash>,<path> && git checkout -- <path>`,
    then spawn that phase again with only the reminder that test files are read-only.
 
+Behaviour-preserving work (a refactor issue, a rename, a move, splitting a module) has no
+Red or Green step, and you do not ask whether to skip them:
+
+- Production code: spawn `tdd-refactor` with the files to change and a one-paragraph
+  goal in place of Green's `changed` list. The existing suite is the safety net. If the
+  code it changes has no test, spawn `tdd-red` first for one test that pins the current
+  behaviour. That test passes, and this is the one case where a passing Red is accepted
+- Test files only (splitting a suite, moving shared helpers): spawn `general-purpose` as
+  a mechanical edit. Record the test count before and after, and treat any difference as
+  a failure
+- Do not write tests for code that only runs inside tests (helpers, fakes, stub factories)
+
 Keep test output out of your context: judge a run by its exit code and read at most the
 last 20 lines (`<run> 2>&1 | tail -n 20`). Pass phase agents paths and the `failure`
 line, never raw logs or another agent's full payload.
@@ -158,6 +194,11 @@ On all scenarios complete:
   and load the built entry point in the runtime it ships to, not the development one.
   If any of them fails, fix that first: the gate is for the defects that remain, not for
   a build that does not run
+- Docs sweep before the gate. For every symbol or file this session renamed, moved or
+  deleted, `grep -rn` the old name in the repository's Markdown (`AGENTS.md`,
+  `CLAUDE.md`, `README.md`, `docs/`). Route each hit to `general-purpose`, then run
+  the repository's docs check if it has one. Stale docs were the most common advisory
+  finding, and catching them here saves a fix round after the gate
 - Stop and hand off to `/review`. That command owns the review gate and invokes the
   review orchestrator; do not invoke the review orchestrator yourself.
 - Do not proceed to commit until `/review` returns {"decision": "pass"}

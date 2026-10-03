@@ -20,16 +20,18 @@ never loads.
 | Directory   | Reaches the agent via                                                               | Authoring rule                                      |
 | ----------- | ----------------------------------------------------------------------------------- | --------------------------------------------------- |
 | `commands/` | Whole-directory symlink `~/.claude/commands -> ../.agents/commands`                 | Edit freely; live immediately, no install step      |
-| `skills/`   | Per-skill symlinks `~/.claude/skills/<name> -> ../../.agents/skills/<name>`         | Vendored: do not hand-edit. Authored: `review` only |
+| `skills/`   | Whole-directory symlink `~/.claude/skills -> ../.agents/skills`                     | Vendored: do not hand-edit. Authored: `review` |
 | `plugins/`  | GitHub marketplace `nikoheikkila-agents`, installed into `~/.claude/plugins/cache/` | Own authored work goes here; requires push + update |
 | `agents/`   | Whole-directory symlink `~/.claude/agents -> ../.agents/agents`                     | Edit freely; live immediately at next session start |
 
 ### `Skills/` Is Mostly Vendored
 
-`review` is the one authored skill here: the pre-commit review gate, with its `scripts/review-diff.sh` in the skill's
-`scripts/` directory. It is not in `.skill-lock.json`, so `npx skills update` should leave it alone, but every new skill needs
-its own symlink (`ln -s ../../.agents/skills/<name> ~/.claude/skills/<name>`) before Claude Code sees it. The rest of
-this section is about the vendored ones.
+`review` is an authored skill: the pre-commit review gate, with its `scripts/review-diff.sh` in the skill's
+`scripts/` directory. It is not in `.skill-lock.json`, so `npx skills update` should leave it alone. Since 2026-10-03,
+`~/.claude/skills` is one symlink to this directory, so a new skill directory loads without any per-skill link.
+
+`skills/synced/` is written by the claude.ai skill sync. It is account-specific, not authored here, and git-ignored.
+Never edit or commit it. The rest of this section is about the vendored skills.
 
 `accessibility`, `performance`, and `find-skills` were installed with the Skills CLI (`npx skills`) and are tracked in
 `.skill-lock.json` with a `skillFolderHash` per skill. Local edits will be clobbered by `npx skills update`. Upstream
@@ -75,7 +77,9 @@ they are invoked by a named parent and need a pre-assembled diff they will not c
 - **`block` needs a `failure_scenario`.** Every finding carries `severity: blocking | advisory`, and only a
   finding that names a concrete input or state and the wrong outcome in the code as written is `blocking`.
   `review-orchestrator` sets `decision` itself from the severities and ignores the `decision` an agent returned.
-  Advisory findings go into the pull request description; they do not trigger a fix round.
+  Advisory findings never block. On a pass, the cheap in-scope ones (stale docs, dead code, a missing test for
+  stated behaviour) get one fix round and a delta review before the commit. The rest go into the pull request
+  description.
 - **Rounds are full, then delta, at most three.** The skill's `scripts/review-diff.sh` writes the diff to a file (lockfiles
   excluded, because an 80 KB diff does not fit in a prompt) and records the index tree; `--delta` produces only
   what the fixes changed. Delta rounds check that each previous blocker closed and that the delta added nothing

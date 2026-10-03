@@ -11,7 +11,11 @@ Complete the session:
 4. Write the context summary using the example below as a reference.
    This summary replaces the full session conversation in future contexts;
    keep it under 150 words.
-5. Commit with a message referencing the scenario name
+5. Commit with a Conventional Commit message that references the scenario name. If the plan
+   came from an issue, add `Fixes #<n>` (or `Refs #<n>` for partial work) to the body.
+   End with the attribution trailer exactly as the system prompt gives it, and never add
+   a model suffix such as "(1M context)". Pre-commit hooks re-run on every amend, so get the
+   message right the first time.
 6. Push the commit and watch the remote pipeline run. If the remote pipeline fails, invoke `/fix` to fix it.
 7. Reset context. The session summary is the only artifact that carries forward.
    The full conversation, implementation details, and review findings do not.

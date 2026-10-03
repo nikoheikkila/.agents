@@ -35,7 +35,14 @@ unchanged and tell it to Read the whole file first.
 
 Execution:
 
-- Invoke all four subagents in parallel
+- Invoke all four subagents in parallel, in one message, by their exact agent types:
+  `semantic-review`, `security-review`, `performance-review`, `concurrency-review`.
+  The short names (`semantic`, `security`) are not agent types and fail. Never substitute
+  a general-purpose agent for a reviewer
+- Wait until all four have returned before you aggregate. If one is still running,
+  wait for its result. Never return a partial aggregate, and never treat a missing
+  reviewer as a pass. If a reviewer fails twice, return `block` with one finding whose
+  `issue` names the reviewer that did not run
 - Every finding carries a `severity`. `blocking` means the agent named a concrete
   `failure_scenario` (input or state, then wrong outcome) in the code as written.
   Everything else is `advisory`. If an agent returns a finding without a severity or
