@@ -52,19 +52,22 @@ human-facing docs into `README.md`, and skill amendments under `.claude/skills/`
 under this repo's own `skills/`/`plugins/`).
 
 The review gate is the skill `skills/review` (invoked as `/review`); see [How the gate converges](#how-the-gate-converges).
-The three commands here drive the agentic-CD pipeline in `agents/`. They are deliberately thin — the rules they route
-to live in the subagent definitions, not in the command files:
+The three commands here drive the agentic-CD pipeline in `agents/`, starting from a spec written with the `specify`
+skill:
 
-- `commands/start-session.md` → `/start-session [scenario]` — hands the scenario to the `orchestrator` subagent, which
-  assembles the minimum context and runs the `tdd-red` → `tdd-green` → `tdd-refactor` cycle for each scenario.
-- `commands/fix.md` → `/fix [failing-test]` — enters pipeline-restore mode and routes the failure to the
-  `orchestrator`.
-- `commands/end-session.md` → `/end-session` — verifies every gate, writes the under-150-word context summary, and
-  commits.
+- `commands/start-session.md` → `/start-session <spec | #issue | bug>` — commits the spec, creates the feature
+  branch, and loops: the `orchestrator` runs up to three `tdd-red` → `tdd-green` → `tdd-refactor` cycles, `/review`
+  gates the chunk, and the chunk is committed. A bug report without a spec goes through `specify`'s bugfix mode
+  first.
+- `commands/end-session.md` → `/end-session` — checks that everything is committed and the base pipeline is green,
+  pushes, opens the pull request with deferred findings and accepted risks from the ledger, and watches the run.
+- `commands/fix.md` → `/fix [run URL | run id | failing command]` — reads the failed CI log, classifies the failure, routes
+  code and config failures to the `orchestrator`, reruns flakes once, and reviews, commits, and pushes the fix.
 
 `/start-session` and `/end-session` carry `disable-model-invocation: true` — type those yourself. `/review` and `/fix`
-stay model-invocable, because the orchestrator hands off to `/review` and a red pipeline should pull in `/fix` without
-being asked.
+stay model-invocable, because `/start-session` runs `/review` for every chunk and a red pipeline should pull in `/fix`
+without being asked. Session state survives `/clear` in a ledger under the git directory
+(`skills/review/scripts/ledger.sh`).
 
 ## Subagents
 
@@ -87,9 +90,11 @@ Between phases the orchestrator re-runs each agent's test command itself, readin
 later phase that edits a test is caught and re-run. The phase agents preload the matching `tdd` plugin skill, so
 install that plugin (see [Installation](#installation)) before using the pipeline.
 
-After the last scenario the orchestrator stops at the review gate rather than crossing it: `/review` invokes `review-orchestrator`, which runs `semantic-review`, `security-review`,
+After each chunk of up to three scenarios the orchestrator stops at the review gate rather than crossing it:
+`/start-session` runs `/review`, which invokes `review-orchestrator`, which runs `semantic-review`, `security-review`,
 `performance-review`, and `concurrency-review` in parallel and returns a single pass/block decision as JSON.
-The orchestrator holds the commit until that decision is `pass`.
+`/start-session` commits the chunk only when that decision is `pass` and the index still matches the tree the gate
+passed.
 
 ### How the Gate Converges
 
@@ -99,12 +104,14 @@ The orchestrator holds the commit until that decision is `pass`.
 - Round 1 reviews the whole staged diff. Later rounds review only the delta since the previous round, checking that
   the earlier blockers closed and nothing new broke. After round 3 the remaining findings go to the user.
 - The skill's `scripts/review-diff.sh [--delta]` prepares each round's diff: it writes it to a file
-  (lockfiles excluded) and records the index tree for the next delta. Reviewers read the file, so the diff can be any size.
-- Before the first round the orchestrator runs the production build and the end-to-end command, and the plan puts
+  (lockfiles excluded) and records the index tree and HEAD for the next delta. Reviewers read the file, so the diff
+  can be any size. `--mark-pass` records the tree a passing gate saw, and `--check-pass` refuses a commit whose index
+  has changed since.
+- Before every gate the orchestrator runs the production build and the end-to-end command, and the plan puts
   the scenario that crosses the real boundary first. Facts only the real environment shows are cheaper to meet
   there than as a blocking finding.
-- An orchestrator run is a chunk of at most three TDD cycles that ends in a JSON checkpoint. Check it with
-  `git status --short` and the test command before you start the next chunk.
+- An orchestrator run is a chunk of at most three TDD cycles that ends in a JSON checkpoint. `/start-session`
+  checks it with `git status --short` and the test command, then gates and commits it before the next chunk.
 
 They reach Claude Code through a whole-directory symlink, created once:
 

@@ -56,14 +56,15 @@ The phase agents preload the `tdd:red`, `tdd:green`, and
 `tdd:refactor` skills from `plugins/tdd`, so that plugin must be installed for them to load their rules.
 The review gate is separate: `/review` invokes `review-orchestrator`, which fans out to `semantic-review`,
 `security-review`, `performance-review`, and `concurrency-review`. The orchestrator never spawns the review
-orchestrator — it stops at the gate and hands off.
+orchestrator and never commits. It returns a gate-ready checkpoint per chunk, and `/start-session` runs `/review`
+and commits that chunk.
 
 Two rules keep them honest when editing:
 
 - **Model tiers are prescribed by the source doc**, not chosen freely — haiku for the review orchestrator and
   performance, sonnet for concurrency, opus for semantic and security. Changing one is a deliberate deviation
   from the guide. Two exist: the TDD split (sonnet/low for `tdd-red`, opus/high for `tdd-green`, opus/medium for
-  `tdd-refactor`), and `orchestrator` on sonnet instead of haiku.
+  `tdd-refactor`), and `orchestrator` on sonnet/medium instead of haiku.
 - **Every agent pins `tools`.** The review agents get `Read` only, so "you do not modify code" is enforced
   rather than merely requested; the orchestrators use the `Agent(<name>)` allowlist to declare exactly which
   subagents they may spawn. The chain sits at the default three-layer nesting limit, so
@@ -81,8 +82,9 @@ they are invoked by a named parent and need a pre-assembled diff they will not c
   stated behaviour) get one fix round and a delta review before the commit. The rest go into the pull request
   description.
 - **Rounds are full, then delta, at most three.** The skill's `scripts/review-diff.sh` writes the diff to a file (lockfiles
-  excluded, because an 80 KB diff does not fit in a prompt) and records the index tree; `--delta` produces only
-  what the fixes changed. Delta rounds check that each previous blocker closed and that the delta added nothing
+  excluded, because an 80 KB diff does not fit in a prompt) and records the index tree and HEAD; `--delta` produces
+  only what the fixes changed, and falls back to a full diff once HEAD has moved. On a pass, `--mark-pass` records
+  the passed tree, and the committer runs `--check-pass` so nothing staged after the review gets committed. Delta rounds check that each previous blocker closed and that the delta added nothing
   new. Round 3 still blocking goes to the user, not to a fourth round.
 - **The caller triages before routing.** Verify each blocking finding against the code or the platform docs, drop
   the ones whose scenario does not hold, and batch the ones that need a product decision into one question. The
@@ -93,7 +95,20 @@ they are invoked by a named parent and need a pre-assembled diff they will not c
   end-to-end command before it hands off to the gate.
 - **An orchestrator run is a chunk, not a session.** At most three TDD cycles or one fix round per run, ending in
   a JSON checkpoint with `git_status` and `not_done`. The caller verifies the checkpoint, so a claim like "fixed"
-  is only as good as the evidence attached to it.
+  is only as good as the evidence attached to it. Each chunk is reviewed and committed on its own.
+
+### The Session Loop
+
+`/specify` writes `specs/<slug>.md` (`Type: feature | bugfix`, with a short bugfix mode) and the feature file.
+`/start-session <spec>` commits the spec, creates `feat/` or `fix/<slug>` unless the repo is trunk-based, then
+loops chunk → `/review` → commit, and sets the spec to `Status: done` with the last chunk. `/end-session` commits
+nothing: it pushes, opens the pull request from the ledger, and watches the run. `/fix` classifies a red run
+(`test`, `build`, `lint`, `config`, `environment`, `flaky`), routes the first four through the orchestrator, and
+reviews, commits, pushes, and watches the fix, at most twice.
+
+Session state lives in `skills/review/scripts/ledger.sh`: an append-only log per slug in
+`$(git rev-parse --git-dir)/agentic/`, so it survives `/clear` without touching the working tree. The commands
+reach both scripts as `~/.claude/skills/review/scripts/`, which depends on the whole-directory `skills/` symlink.
 
 ### `Plugins/` Is the Authored Surface
 
