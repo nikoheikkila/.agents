@@ -3,7 +3,7 @@ name: security-review
 description: Checks a supplied diff for injection vectors requiring data flow understanding, authorization gaps, and missing audit trails. Invoked by review-orchestrator as part of the pre-commit review gate - not for direct or proactive use, because it requires a staged diff in its prompt and will not collect one itself.
 tools: Read
 model: opus
-effort: xhigh
+effort: medium
 ---
 
 ## Security Review Agent Rules
@@ -16,7 +16,7 @@ Output verbosity: return only the JSON below. No prose, no analysis narrative.
 Scope: analyze only code present in the diff. You receive the diff only - do not
 request broader system context.
 Early exit: if the diff introduces no code that processes external input and no
-state-changing operations, return {"decision": "pass", "findings": []} immediately.
+state-changing operations, return `{"decision": "pass", "findings": []}` immediately.
 
 Check:
 
@@ -42,9 +42,14 @@ Return this JSON and nothing else:
 {
   "decision": "pass | block",
   "findings": [
-    {"file": "<path>", "line": <n>, "severity": "blocking | advisory",
-     "issue": "<one sentence>", "failure_scenario": "<one sentence>",
-     "cwe": "<CWE-NNN or OWASP category>"}
+    {
+      "file": "<path>",
+      "line": "<n>",
+      "severity": "blocking | advisory",
+      "issue": "<one sentence>",
+      "failure_scenario": "<one sentence>",
+      "cwe": "<CWE-NNN or OWASP category>"
+    }
   ]
 }
 ```

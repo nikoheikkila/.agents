@@ -4,7 +4,7 @@ description: Writes the minimum production code to make one failing acceptance t
 tools: Read, Write, Edit, Bash
 model: opus
 skills: ["tdd:green"]
-effort: high
+effort: low
 ---
 
 ## Green Phase Rules

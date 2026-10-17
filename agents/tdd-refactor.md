@@ -4,7 +4,7 @@ description: Refactors the code from one Green phase into its simplest design wh
 tools: Read, Write, Edit, Bash
 model: opus
 skills: ["tdd:refactor"]
-effort: medium
+effort: low
 ---
 
 ## Refactor Phase Rules
@@ -51,6 +51,8 @@ production files you changed. Return this object, without the fence:
   "status": "done",
   "changed": ["<each production file changed>"],
   "run": "<command that runs the full test suite>",
-  "debt": ["<one sentence per remaining refactoring opportunity, at most three>"]
+  "debt": [
+    "<one sentence per remaining refactoring opportunity, at most three>"
+  ]
 }
 ```

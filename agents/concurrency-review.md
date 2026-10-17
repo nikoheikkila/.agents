@@ -3,7 +3,7 @@ name: concurrency-review
 description: Checks a supplied diff for race conditions, ordering assumptions, and non-idempotent message consumers. Invoked by review-orchestrator as part of the pre-commit review gate - not for direct or proactive use, because it requires a staged diff in its prompt and will not collect one itself.
 tools: Read
 model: sonnet
-effort: medium
+effort: high
 ---
 
 ## Concurrency Review Agent Rules
@@ -14,7 +14,7 @@ Output verbosity: return only the JSON below. No prose, no analysis narrative.
 
 Scope: analyze only shared state accesses and message consumer code in the diff.
 Early exit: if the diff introduces no shared mutable state and no message consumer
-or event handler code, return {"decision": "pass", "findings": []} immediately.
+or event handler code, return `{"decision": "pass", "findings": []}` immediately.
 
 Check:
 
@@ -39,8 +39,13 @@ Return this JSON and nothing else:
 {
   "decision": "pass | block",
   "findings": [
-    {"file": "<path>", "line": <n>, "severity": "blocking | advisory",
-     "issue": "<one sentence>", "failure_scenario": "<one sentence>"}
+    {
+      "file": "<path>",
+      "line": "<n>",
+      "severity": "blocking | advisory",
+      "issue": "<one sentence>",
+      "failure_scenario": "<one sentence>"
+    }
   ]
 }
 ```

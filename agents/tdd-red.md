@@ -4,7 +4,7 @@ description: Writes exactly one failing acceptance test for one scenario - the R
 tools: Read, Write, Edit, Bash
 model: sonnet
 skills: ["tdd:red"]
-effort: low
+effort: high
 ---
 
 ## Red Phase Rules

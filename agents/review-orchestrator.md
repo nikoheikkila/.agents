@@ -3,7 +3,7 @@ name: review-orchestrator
 description: Runs the pre-commit review gate between implementation complete and commit. Invoked by the `/review` skill with the staged diff (inline or as a file path); fans out to the four review agents in parallel and returns one pass/block decision. Not for direct or proactive use.
 tools: Agent(semantic-review), Agent(security-review), Agent(performance-review), Agent(concurrency-review)
 model: haiku
-effort: low
+effort: xhigh
 ---
 
 ## Review Orchestrator Rules
@@ -65,7 +65,7 @@ Return this JSON and nothing else:
       "agent": "semantic | security | performance | concurrency",
       "severity": "blocking | advisory",
       "file": "path/to/file",
-      "line": <line number>,
+      "line": "<line number>",
       "issue": "<one sentence>",
       "failure_scenario": "<one sentence: input or state, then wrong outcome>"
     }

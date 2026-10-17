@@ -3,7 +3,7 @@ name: performance-review
 description: Checks a supplied diff for missing timeout and deadline enforcement, resource leaks, and missing graceful degradation. Invoked by review-orchestrator as part of the pre-commit review gate - not for direct or proactive use, because it requires a staged diff in its prompt and will not collect one itself.
 tools: Read
 model: haiku
-effort: medium
+effort: xhigh
 ---
 
 ## Performance Review Agent Rules
@@ -14,7 +14,7 @@ Output verbosity: return only the JSON below. No prose, no analysis narrative.
 
 Scope: analyze only external call sites and resource allocations present in the diff.
 Early exit: if the diff introduces no external calls and no resource allocations,
-return {"decision": "pass", "findings": []} immediately without analysis.
+return `{"decision": "pass", "findings": []}` immediately without analysis.
 
 Check:
 
@@ -39,8 +39,13 @@ Return this JSON and nothing else:
 {
   "decision": "pass | block",
   "findings": [
-    {"file": "<path>", "line": <n>, "severity": "blocking | advisory",
-     "issue": "<one sentence>", "failure_scenario": "<one sentence>"}
+    {
+      "file": "<path>",
+      "line": "<n>",
+      "severity": "blocking | advisory",
+      "issue": "<one sentence>",
+      "failure_scenario": "<one sentence>"
+    }
   ]
 }
 ```

@@ -15,7 +15,7 @@ The scripts live in the review skill's directory: `~/.claude/skills/review/scrip
 `ledger.sh` is the session's memory. Record each step in it as it happens, never from
 memory afterwards, so a `/clear` or a new conversation loses nothing.
 
-## 1. Resolve the spec
+## 1. Resolve the Spec
 
 - **A spec path**: read it. If `Status: draft`, stop and tell the user to finish it with
   `/specify`. If `Status: done`, stop and say so.
@@ -27,21 +27,20 @@ memory afterwards, so a `/clear` or a new conversation loses nothing.
 
 The slug is the spec's filename without `.md`.
 
-## 2. Prepare the branch
+## 2. Prepare the Branch
 
 Skip this step when `ledger.sh show <slug> branch` already has a line; that is a resume.
 
 1. If `git status --short` shows changes outside the spec and its feature file, stop and
    ask the user what to do with them. Never sweep unrelated work into a session commit.
-2. If you are on the default branch (`git symbolic-ref --short refs/remotes/origin/HEAD`)
-   and the repository's `AGENTS.md` or `CLAUDE.md` does not say it works trunk-based,
-   create `feat/<slug>` (or `fix/<slug>` for `Type: bugfix`) with `git switch -c`.
+2. If you are on the default branch (`git symbolic-ref --short refs/remotes/origin/HEAD`),
+   keep working there. Do not switch to a new branch.
 3. If the spec or its feature file is untracked or modified, commit them alone as
    `docs(spec): add <slug> specification`. The human already gated them in `/specify`,
    so this commit does not go through `/review`.
 4. Record `spec <path>`, `branch <name>`, and `issue #<n>` (if the spec names one).
 
-## 3. Run a chunk
+## 3. Run a Chunk
 
 Delegate to the `orchestrator` subagent. Pass it only:
 
@@ -70,7 +69,7 @@ Record the verified checkpoint as one `chunk` line: the scenarios done and the t
 If the checkpoint is `blocked` because a test, build, or pipeline stage is red for a reason
 outside this chunk, invoke `/fix` and resume after it returns.
 
-## 4. Gate and commit the chunk
+## 4. Gate and Commit the Chunk
 
 Every chunk with `done` work is reviewed and committed on its own. Small commits keep the
 review diff small and every step reversible.
@@ -90,7 +89,7 @@ review diff small and every step reversible.
 
 If the orchestrator returned `checkpoint`, go back to step 3 for the next chunk.
 
-## 5. Close the session
+## 5. Close the Session
 
 When the last chunk is committed, write the session summary once, as one `summary` line
 under 150 words: the files created, the tests added and which scenario each covers, and

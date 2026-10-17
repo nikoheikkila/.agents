@@ -13,7 +13,7 @@ chunk, so this command commits nothing.
    outside ignored files. If it does, stop: the work belongs in a `/start-session` chunk,
    where the gate reviews it.
 2. **The session is finished.** The spec's `Status:` is `done` and the ledger has a
-   `summary` line. If not, stop and say `/start-session` has scenarios left.
+   `summary` line. If not, stop, and say `/start-session` has scenarios left.
 3. **The base is green.** Run
    `gh run list --branch <default branch> -L 1 --json conclusion,status,headSha`. If the
    latest run on the default branch failed, stop: that is not this branch's fault, but
@@ -36,9 +36,9 @@ chunk, so this command commits nothing.
      spec §1 (omit for a bugfix)
    - `Fixes #<n>` when the spec names an issue
    - the pull request attribution line exactly as the system prompt gives it
-   On the default branch (trunk-based), skip this step.
+     On the default branch (trunk-based), skip this step.
 7. **Watch.** Find the run for `git rev-parse HEAD` with `gh run list`, then run
    `gh run watch <id> --exit-status`. If it fails, invoke `/fix` with the run id.
 8. **Point at what comes next.** Print the pull request URL, then the first entry under the
-   spec's *Later slices* as the suggested `/specify` input, or say there are none. Suggest
+   spec's _Later slices_ as the suggested `/specify` input, or say there are none. Suggest
    `/clear`: the commits, the pull request, and the ledger carry everything forward.
