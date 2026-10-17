@@ -136,7 +136,8 @@ public API". Omit the section when there are none.>
 ## 4. `feature/<slug>.feature` template
 
 Each `Then` must be observable by the user or caller. Use `Background` for shared
-preconditions, and `Scenario Outline` with `Examples` for boundary values.
+preconditions, and `Scenario Outline` with `Examples` for boundary values. The `gherkin`
+skill has the full language and style rules.
 
 ```gherkin
 Feature: <slice name>
@@ -167,16 +168,16 @@ Scenario: Client exceeds rate limit
   Given an authenticated client
   And the client has made 100 requests in the current minute
   When the client makes another request to /api/search
-  Then the response status should be 429
-  And the response should include a Retry-After header
-  And the Retry-After value should indicate when the limit resets
+  Then the response status is 429
+  And the response includes a Retry-After header
+  And the Retry-After value indicates when the limit resets
 
 Scenario: Client within rate limit
   Given an authenticated client
   And the client has made 50 requests in the current minute
   When the client makes a request to /api/search
-  Then the request should be processed normally
-  And the response should include rate limit headers showing remaining quota
+  Then the request is processed normally
+  And the response includes rate limit headers showing remaining quota
 ```
 
 **Feature description**

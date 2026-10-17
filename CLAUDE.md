@@ -20,7 +20,7 @@ never loads.
 | Directory   | Reaches the agent via                                                               | Authoring rule                                      |
 | ----------- | ----------------------------------------------------------------------------------- | --------------------------------------------------- |
 | `commands/` | Whole-directory symlink `~/.claude/commands -> ../.agents/commands`                 | Edit freely; live immediately, no install step      |
-| `skills/`   | Whole-directory symlink `~/.claude/skills -> ../.agents/skills`                     | Vendored: do not hand-edit. Authored: `review` |
+| `skills/`   | Whole-directory symlink `~/.claude/skills -> ../.agents/skills`                     | Vendored: do not hand-edit. Authored: `review`, `specify`, `gherkin` |
 | `plugins/`  | GitHub marketplace `nikoheikkila-agents`, installed into `~/.claude/plugins/cache/` | Own authored work goes here; requires push + update |
 | `agents/`   | Whole-directory symlink `~/.claude/agents -> ../.agents/agents`                     | Edit freely; live immediately at next session start |
 

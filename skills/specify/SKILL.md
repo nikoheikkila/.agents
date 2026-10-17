@@ -9,7 +9,7 @@ Help a human write the specification for **one** small change, following
 [Agent-Assisted Specification](https://beyond.minimumcd.org/docs/agentic-cd/specification/agent-assisted-specification/)
 and the [Agent Delivery Contract](https://beyond.minimumcd.org/docs/agentic-cd/specification/first-class-artifacts/).
 The result is four artifacts that an autonomous implementer can use as pipeline inputs:
-intent description, user-facing behavior, feature description, and acceptance criteria.
+intent description, user-facing behaviour, feature description, and acceptance criteria.
 
 Read `references/artifacts.md` before you draft or write any artifact. It has the
 definition, owner, and template for each one, plus a complete worked example.
@@ -20,16 +20,16 @@ These rules separate agent-assisted specification from "the agent wrote me a spe
 Every rule below depends on them.
 
 1. **The human owns the spec. You critique and refine it.** Every stage runs the same cycle:
-   *human drafts → agent critiques → human decides → agent refines*. Raise problems as
+   _human drafts → agent critiques → human decides → agent refines_. Raise problems as
    numbered findings. The human accepts, rejects, or changes each one, and you fold in only
    the decisions they made. Don't quietly swap their wording for yours. Never invent their
    numbers, thresholds, or hypothesis. If one is missing, ask for it. The value of a spec
-   is that it says what *they* want, so a polished spec built on your guesses is worse than
+   is that it says what _they_ want, so a polished spec built on your guesses is worse than
    a rough spec built on theirs.
-2. **Specify one thin vertical slice.** That means a single behavior that can ship on its
+2. **Specify one thin vertical slice.** That means a single behaviour that can ship on its
    own, not a feature set. If specifying it would take the human more than about 15
    minutes, the change is too big. Propose a split into slices that each deliver
-   independently, let the human pick one, and record the others under *Later slices*. A
+   independently, let the human pick one, and record the others under _Later slices_. A
    detailed spec for months of work adds risk instead of removing it.
 3. **Higher-authority artifacts win.** The order is intent > user-facing behavior >
    feature description > acceptance criteria > system constraints > implementation. When
@@ -46,11 +46,13 @@ Every rule below depends on them.
 
 1. If you are in a repository, take a quick look first, so that your questions are informed
    and not generic:
-   - existing `specs/` and `feature/` directories (and any other spec convention)
-   - system-wide constraints in `AGENTS.md`, `CLAUDE.md`, or the docs
-   - the code areas the change names
+
+   - Existing `specs/` and `feature/` directories (and any other spec convention)
+   - System-wide constraints in `AGENTS.md`, `CLAUDE.md`, or the docs
+   - The code areas the change names
 
    Don't explore broadly. Don't ask what you could learn by reading a file.
+
 2. Pick a mode and say in one sentence which one you picked, so the human can redirect:
    - **Critique mode**: the human already has a draft of something (an intent, a story,
      scenarios, a ticket). Start at the earliest stage that is missing or weakest.
@@ -61,17 +63,18 @@ Every rule below depends on them.
      the system was already meant to have. Use the short path below, not the four stages.
 3. Before you go deep, check scope against ground rule 2. Splitting is cheapest now.
 
-## Bugfix mode
+## Bugfix Mode
 
 A bugfix should take the human about five minutes to specify, not fifteen. It uses the
 bugfix template in `references/artifacts.md`: observed, expected, impact, one regression
-scenario, and a done definition. There is no hypothesis, constraint architecture, or task
-decomposition.
+scenario, and a done definition. Hypothesis, constraint architecture, or task
+decomposition are not needed.
 
-1. If the input is an issue number, read it (`gh issue view <n>`) and record `Issue: #<n>`.
+1. If the input is an issue number, read it (`gh issue view <n>`) and record `Issue: #<n>` to context.
 2. Draft the observed, expected, and impact lines from the report. Mark anything the
    report does not say as `[assumed]`.
-3. Draft one regression scenario whose `Then` fails today. Add a second scenario only when
+3. Draft one regression scenario whose `Then` step fails, written by the `gherkin` skill's
+   rules. Add a second scenario only when
    the bug sits on a boundary and the neighbouring value must keep working.
 4. Run one critique round, capped at three findings: is the expected behaviour actually
    agreed, is the regression scenario observable, and could the fix break a Must Not.
@@ -80,11 +83,11 @@ decomposition.
 If the "bug" turns out to be new behaviour nobody agreed on, say so and switch to critique
 mode. A feature disguised as a bugfix skips the hypothesis and the constraints it needs.
 
-## Critique mode
+## Critique Mode
 
 Work through the stages in order. Each stage ends when the human approves that artifact.
-Don't move on while a finding is unresolved, unless the human explicitly defers it; log
-deferred findings under *Open questions*.
+Don't move on while you have unresolved findings, unless the human explicitly defers it; log
+deferred findings under _Open questions_.
 
 Use this format for findings, so the human can answer by number:
 
@@ -98,7 +101,7 @@ The tags are `ambiguity`, `assumption`, `missing`, `edge-case`, `split`, `hypoth
 `vague-scenario`, `conflict`, and `terminology`. Finish with one line asking which findings
 they accept, reject, or want to change. Then show the refined artifact.
 
-### 1. Intent description
+### 1. Intent Description
 
 The intent says what the change should do and why, never how. Check it for:
 
@@ -112,22 +115,24 @@ The intent says what the change should do and why, never how. Check it for:
   What else could produce the same outcome? A weak hypothesis costs one prompt to catch
   now and a whole delivery cycle to discover after deployment.
 
-### 2. User-facing behavior (BDD scenarios)
+### 2. User-Facing Behaviour (BDD Scenarios)
 
-You draft this artifact; the human curates it. Once the intent is approved:
+You draft this artifact; the human curates it. Load the `gherkin` skill before you draft or
+critique any scenario. This stage decides which behaviours need scenarios, and `gherkin`
+decides how each one is written. Once the human approves the intent:
 
 1. Generate Gherkin scenarios covering the primary success path, key error paths, and edge
    cases. Give each scenario one line on why it matters.
 2. Ask the human what is missing. Then hunt for gaps yourself: boundary conditions,
-   concurrent access, failure modes, and interactions with existing behavior.
+   concurrent access, failure modes, and interactions with existing behaviour.
 3. Challenge vague scenarios. Flag any scenario that two implementations could both pass
-   while showing users different behavior. Every `Then` must be something the user or the
+   while showing users different behaviour. Every `Then` must be something the user or the
    caller can observe, not internal state.
 
 The human decides which scenarios stay. Your job is to make sure they considered more
 scenarios than they would have alone.
 
-### 3. Feature description (constraint architecture)
+### 3. Feature Description (Constraint Architecture)
 
 Ask for a short description of the current architecture, or read the relevant code if you
 are in the repository. Then suggest what the human should decide and record:
@@ -138,15 +143,15 @@ are in the repository. Then suggest what the human should decide and record:
 - **Preferences**: soft defaults that the implementer may trade off
 - **Escalation triggers**: conditions under which the implementer must stop and ask. Good
   candidates are decisions you noticed the human has not made yet, such as fail open or
-  fail closed, or what to do if an upstream service does not expose a field.
-- **Non-functional requirements** stated as constraints: latency, throughput, security,
-  resource usage, and operations. For each one, explain why it matters for *this* change.
+  fail to closed, or what to do if an upstream service does not expose a field.
+- **Nonfunctional requirements** stated as constraints: latency, throughput, security,
+  resource usage, and operations. For each one, explain why it matters for _this_ change.
   These feed the acceptance criteria.
 
 Reference the global system constraints you found in step 1 of "Start"; don't copy them.
 The human makes the architectural decisions and sets the thresholds.
 
-### 4. Acceptance criteria
+### 4. Acceptance Criteria
 
 - **Done definition**: observable outcomes that someone who has never seen the code could
   verify. Functional criteria come from the scenarios. Non-functional criteria come from
@@ -159,13 +164,13 @@ The human makes the architectural decisions and sets the thresholds.
 Then add a short **task decomposition**. List the modules or tasks with explicit inputs and
 outputs, each under about two hours of work. A single task is fine for a small slice.
 
-## Discovery loop
+## Discovery Loop
 
 Use this when there is nothing to critique yet. You act as a principal architect who
 interviews the human to draw out context they didn't know was missing. Don't write any of
 the spec until phase 3.
 
-1. **Framing**: ask the human for the *outcome* they want, not the application they
+1. **Framing**: ask the human for the _outcome_ they want, not the application they
    imagine, plus a rough hypothesis ("I believe this will cut X by about Y"). The hypothesis
    can be loose at this point; stating one early pushes the human to think about
    measurement.
@@ -183,39 +188,39 @@ the spec until phase 3.
    agent would get confused, which constraints are still too vague, and which edge cases
    the evaluation design misses. Present the answers as findings, then go to the gate.
 
-## Decision log
+## Decision Log
 
 Long conversations lose decisions in the middle of the context. As soon as the slice has a
-name, create `specs/<slug>.md` with `Status: draft` and a `## Decision log` section. Tell
+name, create `specs/<slug>.md` with `Status: draft` and a `## Decision Log` section. Tell
 the human the path the first time. Append one line per decision as it is made (accepted
 finding, rejected finding, chosen threshold, deferred question), and fill in each artifact
 section once the human approves it. The log is your source when you redraft. Don't rely on
 memory of the conversation.
 
-## Validation gate
+## Validation Gate
 
 Before anyone generates a test or writes code, review all four artifacts together. Each
 one can look fine alone and still contradict the others. Report each check as `pass` or
 with numbered findings:
 
-| Check           | Question                                                                         |
-| --------------- | -------------------------------------------------------------------------------- |
-| Clarity         | Could two developers read the intent differently?                                |
-| Testability     | Does every scenario have a clear, observable outcome?                            |
-| Scope           | Does the feature description constrain the work to what the intent needs, without over-engineering? |
-| Terminology     | Is each concept named the same way in all four artifacts?                        |
-| Completeness    | Does the intent imply any behavior that has no scenario?                         |
-| Conflict        | Does anything in one artifact contradict another?                                |
-| Hypothesis      | Is there a way to validate it after deployment, using data that will exist?      |
-| Self-containment | Could an agent implement from these documents alone, with no questions?         |
+| Check            | Question                                                                                            |
+| ---------------- | --------------------------------------------------------------------------------------------------- |
+| Clarity          | Could two developers read the intent differently?                                                   |
+| Testability      | Does every scenario have a clear, observable outcome?                                               |
+| Scope            | Does the feature description constrain the work to what the intent needs, without over-engineering? |
+| Terminology      | Is each concept named the same way in all four artifacts?                                           |
+| Completeness     | Does the intent imply any behavior that has no scenario?                                            |
+| Conflict         | Does anything in one artifact contradict another?                                                   |
+| Hypothesis       | Is there a way to validate it after deployment, using data that will exist?                         |
+| Self-containment | Could an agent implement from these documents alone, with no questions?                             |
 
-The human gates on this review. Resolve each finding through the critique cycle; the
-lower-authority artifact changes by default. A finding the human explicitly chooses to live
-with goes under *Open questions* as an accepted risk. Don't mark the spec ready, and don't
-write the feature file, while a finding is still open. A conflict caught here costs minutes.
+The human gates on this review. Resolve all findings through the critique cycle; the
+lower-authority artifact changes by default. All findings the human explicitly chooses to live
+with goes under _Open questions_ as an accepted risk. Don't mark the spec ready, and don't
+write the feature file, while findings are still open. A conflict caught here costs minutes.
 The same conflict caught during implementation costs a session.
 
-## Output and hand-off
+## Output and Hand-Off
 
 When the gate passes:
 
@@ -225,7 +230,7 @@ When the gate passes:
 3. If the project already uses a different convention (`features/`, `docs/specs/`, and so
    on), follow it and tell the human.
 
-Finish with a short message that gives the two paths, the deferred *Later slices*, and the
+Finish with a short message that gives the two paths, the deferred _Later slices_, and the
 next step: `/start-session specs/<slug>.md`. That command commits the spec, creates the
 branch, and runs the orchestrator with the spec as its feature description and the scenarios
 as its plan. Don't start implementation or test generation yourself unless the human asks.
