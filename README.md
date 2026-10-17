@@ -7,7 +7,7 @@ plugins. The repo is public because Claude Code installs plugins from a GitHub m
 
 Add the marketplace once, then install whichever plugins you need:
 
-```text
+```bash
 /plugin marketplace add nikoheikkila/.agents
 /plugin install alt-text-generator@nikoheikkila-agents
 /plugin install tdd@nikoheikkila-agents
@@ -16,7 +16,7 @@ Add the marketplace once, then install whichever plugins you need:
 Installed plugins are pinned to a commit SHA, so a change pushed to this repo isn't picked up automatically. Update
 with:
 
-```
+```bash
 /plugin marketplace update nikoheikkila-agents
 /plugin install <name>@nikoheikkila-agents
 ```
@@ -75,63 +75,55 @@ The commands, skills, and subagents below form one loop. Humans own the start (t
 push); agents own everything between, one small chunk at a time.
 
 ```mermaid
-flowchart TD
-    classDef human fill:#fff3cd,stroke:#b58900,color:#000
-    classDef main fill:#d6e9f8,stroke:#2b6cb0,color:#000
-    classDef agent fill:#e6f4ea,stroke:#2f855a,color:#000
-    classDef gate fill:#fde2e2,stroke:#c53030,color:#000
+sequenceDiagram
+  autonumber
+  actor Human
+  participant Main as 🤖 Main Agent
+  participant Orchestrator as 🤖 Orchestrator
+  participant TDD as 🤖 TDD Red, Green, Refactor
+  participant Review as 🤖 Review Orchestrator
+  participant Reviewers as 🤖 Reviewer Agents
 
-    Specify["Human runs /specify<br/>create and refine spec artifacts"]:::human
-    Start["Human runs /start-session<br/>start working on a scenario"]:::human
-    Main["Main agent<br/>drives the session loop"]:::main
+  Human->>Main: /specify
+  loop Refinement
+    Main->>Human: Critique and refine
+    Human->>Main: Decide
+  end
+  Main->>Human: Spec & features
 
-    Specify --> Start --> Main
-    Main -->|"gather context"| Orchestrator
+  Human->>Main: /start-session
+  Main->>Main: Commit spec, create branch
 
-    subgraph Chunk["Chunk: at most three TDD cycles"]
-        Orchestrator["orchestrator<br/>assembles context"]:::agent
-        Red["tdd-red<br/>write a failing test"]:::agent
-        RedCheck{"Orchestrator confirms<br/>test fails?"}
-        Green["tdd-green<br/>make it pass"]:::agent
-        GreenCheck{"Orchestrator confirms<br/>test passes?"}
-        Refactor["tdd-refactor<br/>clean it up"]:::agent
-        More{"More scenarios<br/>in this chunk?"}
-
-        Orchestrator --> Red --> RedCheck
-        RedCheck -->|"no"| Red
-        RedCheck -->|"yes"| Green --> GreenCheck
-        GreenCheck -->|"no"| Green
-        GreenCheck -->|"yes"| Refactor --> More
-        More -->|"yes, next scenario"| Red
+  loop Each chunk
+    Main->>Orchestrator: Implement chunk
+    loop Up to 3 scenarios
+      Orchestrator->>TDD: Red, then Green, then Refactor
+      TDD->>Orchestrator: Tests pass
     end
+    Orchestrator->>Main: Checkpoint
 
-    More -->|"no, checkpoint"| Main
-    Main -->|"/review: delegate for review gate"| ReviewOrchestrator
-
-    subgraph Gate["Review gate"]
-        ReviewOrchestrator["review-orchestrator"]:::gate
-        SecurityReview["security-review"]:::gate
-        PerformanceReview["performance-review"]:::gate
-        SemanticReview["semantic-review"]:::gate
-        ConcurrencyReview["concurrency-review"]:::gate
-        Decision{"Blocking findings<br/>or advisories?"}
-
-        ReviewOrchestrator -->|"parallel"| SecurityReview & PerformanceReview & SemanticReview & ConcurrencyReview
-        SecurityReview & PerformanceReview & SemanticReview & ConcurrencyReview --> Decision
+    loop Up to 3 rounds
+      Main->>Review: /review
+      Review->>Reviewers: Diff, in parallel
+      Reviewers->>Review: Findings
+      Review->>Main: Pass or block
+      opt Blocking findings
+        Main->>Orchestrator: Fix with TDD, then delta review
+      end
     end
+    Main->>Main: Commit chunk
+  end
 
-    Decision -->|"yes"| Fix["Main agent triages findings and<br/>delegates them to the orchestrator<br/>to fix in TDD cycles"]:::main
-    Fix --> Orchestrator
-    Decision -->|"no, pass"| Commit["Main agent commits the chunk"]:::main
-    Commit -->|"scenarios remain"| Main
-    Commit -->|"all scenarios done"| Human["Human reviews and tests the outcome"]:::human
+  Human->>Human: Review and test
+  Human->>Main: /end-session
+  Main->>Main: Push, open pull request
 
-    Human --> End["Human runs /end-session<br/>end the session and push changes"]:::human
-    End --> ContinuousIntegration{"Main agent monitors the continuous integration<br/>and delivery pipeline: green?"}
-    ContinuousIntegration -->|"yes"| Done(["Done: pull request ready"])
-    ContinuousIntegration -->|"no"| FixCommand["Main agent runs /fix"]:::main
-    FixCommand -->|"classify failure, route to"| Orchestrator
-    FixCommand -.->|"review, commit, push, watch"| ContinuousIntegration
+  loop Until pipeline is green
+    Main->>Main: Watch pipeline
+    opt Pipeline failed
+      Main->>Main: /fix (at most twice)
+    end
+  end
 ```
 
 1. **Specify.** The human runs `/specify` to create and refine the spec artifacts: the intent, the BDD scenarios, the
@@ -148,9 +140,10 @@ flowchart TD
 7. **Review gate.** The main agent runs `/review`, which delegates to `review-orchestrator`.
 8. **Parallel review.** `review-orchestrator` invokes `security-review`, `performance-review`, `semantic-review`, and
    `concurrency-review` in parallel and returns a single pass/block decision.
-9. **Fix findings.** If there are blocking findings or advisories, the main agent triages them and delegates them to the
+9. **Fix findings.** If there are blocking findings, the main agent triages them and delegates them to the
    orchestrator, which fixes them in TDD cycles. A delta review follows, at most three rounds in total. When the gate
-   passes, the main agent commits the chunk and starts the next one.
+   passes, the cheap in-scope advisories are fixed, the rest are deferred to the pull request, and the main agent
+   commits the chunk and starts the next one.
 10. **Human review.** Once every scenario is committed, the human reviews and tests the outcome.
 11. **End the session.** The human runs `/end-session`, which pushes the changes and opens the pull request.
 12. **Watch the pipeline.** The main agent monitors the CI/CD pipeline. If it fails, it runs `/fix`, which classifies the
