@@ -69,6 +69,93 @@ stay model-invocable, because `/start-session` runs `/review` for every chunk an
 without being asked. Session state survives `/clear` in a ledger under the git directory
 (`skills/review/scripts/ledger.sh`).
 
+## Agentic CD Workflow
+
+The commands, skills, and subagents below form one loop. Humans own the start (the spec) and the end (acceptance and
+push); agents own everything between, one small chunk at a time.
+
+```mermaid
+flowchart TD
+    classDef human fill:#fff3cd,stroke:#b58900,color:#000
+    classDef main fill:#d6e9f8,stroke:#2b6cb0,color:#000
+    classDef agent fill:#e6f4ea,stroke:#2f855a,color:#000
+    classDef gate fill:#fde2e2,stroke:#c53030,color:#000
+
+    Specify["Human runs /specify<br/>create and refine spec artifacts"]:::human
+    Start["Human runs /start-session<br/>start working on a scenario"]:::human
+    Main["Main agent<br/>drives the session loop"]:::main
+
+    Specify --> Start --> Main
+    Main -->|"gather context"| Orchestrator
+
+    subgraph Chunk["Chunk: at most three TDD cycles"]
+        Orchestrator["orchestrator<br/>assembles context"]:::agent
+        Red["tdd-red<br/>write a failing test"]:::agent
+        RedCheck{"Orchestrator confirms<br/>test fails?"}
+        Green["tdd-green<br/>make it pass"]:::agent
+        GreenCheck{"Orchestrator confirms<br/>test passes?"}
+        Refactor["tdd-refactor<br/>clean it up"]:::agent
+        More{"More scenarios<br/>in this chunk?"}
+
+        Orchestrator --> Red --> RedCheck
+        RedCheck -->|"no"| Red
+        RedCheck -->|"yes"| Green --> GreenCheck
+        GreenCheck -->|"no"| Green
+        GreenCheck -->|"yes"| Refactor --> More
+        More -->|"yes, next scenario"| Red
+    end
+
+    More -->|"no, checkpoint"| Main
+    Main -->|"/review: delegate for review gate"| ReviewOrchestrator
+
+    subgraph Gate["Review gate"]
+        ReviewOrchestrator["review-orchestrator"]:::gate
+        SecurityReview["security-review"]:::gate
+        PerformanceReview["performance-review"]:::gate
+        SemanticReview["semantic-review"]:::gate
+        ConcurrencyReview["concurrency-review"]:::gate
+        Decision{"Blocking findings<br/>or advisories?"}
+
+        ReviewOrchestrator -->|"parallel"| SecurityReview & PerformanceReview & SemanticReview & ConcurrencyReview
+        SecurityReview & PerformanceReview & SemanticReview & ConcurrencyReview --> Decision
+    end
+
+    Decision -->|"yes"| Fix["Main agent triages findings and<br/>delegates them to the orchestrator<br/>to fix in TDD cycles"]:::main
+    Fix --> Orchestrator
+    Decision -->|"no, pass"| Commit["Main agent commits the chunk"]:::main
+    Commit -->|"scenarios remain"| Main
+    Commit -->|"all scenarios done"| Human["Human reviews and tests the outcome"]:::human
+
+    Human --> End["Human runs /end-session<br/>end the session and push changes"]:::human
+    End --> ContinuousIntegration{"Main agent monitors the continuous integration<br/>and delivery pipeline: green?"}
+    ContinuousIntegration -->|"yes"| Done(["Done: pull request ready"])
+    ContinuousIntegration -->|"no"| FixCommand["Main agent runs /fix"]:::main
+    FixCommand -->|"classify failure, route to"| Orchestrator
+    FixCommand -.->|"review, commit, push, watch"| ContinuousIntegration
+```
+
+1. **Specify.** The human runs `/specify` to create and refine the spec artifacts: the intent, the BDD scenarios, the
+   feature description, and the acceptance criteria.
+2. **Start the session.** The human runs `/start-session` to start working on a scenario. The main agent commits the
+   spec, creates the branch, and begins the chunk loop.
+3. **Gather context.** The main agent invokes `orchestrator`, which assembles the minimum context for the chunk: the
+   feature description, the scenarios still to do, the files they touch, and the prior checkpoint.
+4. **Red.** The orchestrator invokes `tdd-red` to write one failing test for the scenario.
+5. **Green.** The orchestrator runs the test itself and confirms it fails on an assertion, then invokes `tdd-green` to
+   make it pass with the minimum code.
+6. **Refactor.** The orchestrator confirms the suite is passing, then invokes `tdd-refactor` to clean the code up. It
+   repeats steps 4–6 for each scenario, up to three per chunk, then returns a checkpoint to the main agent.
+7. **Review gate.** The main agent runs `/review`, which delegates to `review-orchestrator`.
+8. **Parallel review.** `review-orchestrator` invokes `security-review`, `performance-review`, `semantic-review`, and
+   `concurrency-review` in parallel and returns a single pass/block decision.
+9. **Fix findings.** If there are blocking findings or advisories, the main agent triages them and delegates them to the
+   orchestrator, which fixes them in TDD cycles. A delta review follows, at most three rounds in total. When the gate
+   passes, the main agent commits the chunk and starts the next one.
+10. **Human review.** Once every scenario is committed, the human reviews and tests the outcome.
+11. **End the session.** The human runs `/end-session`, which pushes the changes and opens the pull request.
+12. **Watch the pipeline.** The main agent monitors the CI/CD pipeline. If it fails, it runs `/fix`, which classifies the
+    failure, routes it to the orchestrator, then reviews, commits, and pushes the fix, at most twice.
+
 ## Subagents
 
 `agents/` holds a nine-agent pre-commit pipeline adapted from the
