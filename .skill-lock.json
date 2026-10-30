@@ -6,9 +6,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/addyosmani/web-quality-skills.git",
       "skillPath": "skills/accessibility/SKILL.md",
-      "skillFolderHash": "abdb452337317f5840e4298e46ad07663342dbe8",
+      "skillFolderHash": "90b7b38a892c625d19408df411e46cca7ff3819d",
       "installedAt": "2026-04-22T15:39:08.996Z",
-      "updatedAt": "2026-07-11T19:27:53.319Z"
+      "updatedAt": "2026-10-30T19:39:34.772Z"
     },
     "find-skills": {
       "source": "vercel-labs/skills",
@@ -24,9 +24,9 @@
       "sourceType": "github",
       "sourceUrl": "https://github.com/addyosmani/web-quality-skills.git",
       "skillPath": "skills/performance/SKILL.md",
-      "skillFolderHash": "62de2e9d8439998bd386f06a1c8acb96877f48fe",
+      "skillFolderHash": "69232372c8ae1d7f927267073560cbc762251662",
       "installedAt": "2026-05-06T17:09:39.870Z",
-      "updatedAt": "2026-07-11T19:27:54.951Z"
+      "updatedAt": "2026-10-30T19:39:36.475Z"
     },
     "skill-creator": {
       "source": "anthropics/skills",
@@ -48,6 +48,7 @@
     "codex",
     "cursor",
     "droid",
+    "fx",
     "gemini-cli",
     "github-copilot",
     "kilo",
