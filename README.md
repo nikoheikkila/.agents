@@ -96,7 +96,7 @@ sequenceDiagram
 
   loop Each chunk
     Main->>Orchestrator: Implement chunk
-    loop Up to 3 scenarios
+    loop Up to 3 steps: acceptance test or TDD cycle
       Orchestrator->>TDD: Red, then Green, then Refactor
       TDD->>Orchestrator: Tests pass
     end
@@ -127,16 +127,20 @@ sequenceDiagram
 ```
 
 1. **Specify.** The human runs `/specify` to create and refine the spec artifacts: the intent, the BDD scenarios, the
-   feature description, and the acceptance criteria.
-2. **Start the session.** The human runs `/start-session` to start working on a scenario. The main agent commits the
+   feature description, and the acceptance criteria. A spec holds exactly one scenario, which becomes the
+   acceptance test of the ATDD loop. The human then approves a plan of at most six TDD cycles that make it pass.
+2. **Start the session.** The human runs `/start-session` to start working on the spec. The main agent commits the
    spec, creates the branch, and begins the chunk loop.
 3. **Gather context.** The main agent invokes `orchestrator`, which assembles the minimum context for the chunk: the
-   feature description, the scenarios still to do, the files they touch, and the prior checkpoint.
-4. **Red.** The orchestrator invokes `tdd-red` to write one failing test for the scenario.
+   feature description, the next one to three steps of the plan (the acceptance test or a TDD cycle), the files
+   they touch, and the prior checkpoint.
+4. **Red.** In the first chunk, `tdd-red` writes the failing acceptance test for the scenario, and the
+   orchestrator marks it strictly expected-to-fail. In each cycle, `tdd-red` writes one failing unit test.
 5. **Green.** The orchestrator runs the test itself and confirms it fails on an assertion, then invokes `tdd-green` to
    make it pass with the minimum code.
 6. **Refactor.** The orchestrator confirms the suite is passing, then invokes `tdd-refactor` to clean the code up. It
-   repeats steps 4–6 for each scenario, up to three per chunk, then returns a checkpoint to the main agent.
+   repeats steps 4–6 for each cycle, up to three steps per chunk, then returns a checkpoint to the main agent. When
+   a cycle makes the acceptance test pass, its marker trips and is removed, and the spec is done.
 7. **Review gate.** The main agent runs `/review`, which delegates to `review-orchestrator`.
 8. **Parallel review.** `review-orchestrator` invokes `security-review`, `performance-review`, `semantic-review`, and
    `concurrency-review` in parallel and returns a single pass/block decision.
@@ -144,7 +148,7 @@ sequenceDiagram
    orchestrator, which fixes them in TDD cycles. A delta review follows, at most three rounds in total. When the gate
    passes, the cheap in-scope advisories are fixed, the rest are deferred to the pull request, and the main agent
    commits the chunk and starts the next one.
-10. **Human review.** Once every scenario is committed, the human reviews and tests the outcome.
+10. **Human review.** Once the acceptance test passes and is committed, the human reviews and tests the outcome.
 11. **End the session.** The human runs `/end-session`, which pushes the changes and opens the pull request.
 12. **Watch the pipeline.** The main agent monitors the CI/CD pipeline. If it fails, it runs `/fix`, which classifies the
     failure, routes it to the orchestrator, then reviews, commits, and pushes the fix, at most twice.
@@ -154,11 +158,12 @@ sequenceDiagram
 `agents/` holds a nine-agent pre-commit pipeline adapted from the
 [MinimumCD agentic-CD guide](https://beyond.minimumcd.org/docs/agentic-cd/architecture/agent-configuration/).
 `orchestrator` is the entry point — ask it to start working on an implementation from a plan,
-and it assembles the minimum context and runs one TDD cycle per scenario, in sequence:
+and it assembles the minimum context, writes the spec's acceptance test, and runs the planned TDD cycles until it
+passes:
 
 | Agent          | Phase                                         | Model  | Effort |
 | -------------- | --------------------------------------------- | ------ | ------ |
-| `tdd-red`      | Write one failing acceptance test             | sonnet | low    |
+| `tdd-red`      | Write one failing acceptance or unit test     | sonnet | low    |
 | `tdd-green`    | Write the minimum code to make it pass        | opus   | high   |
 | `tdd-refactor` | Simplify the design while keeping tests green | opus   | medium |
 
@@ -170,7 +175,7 @@ Between phases the orchestrator re-runs each agent's test command itself, readin
 later phase that edits a test is caught and re-run. The phase agents preload the matching `tdd` plugin skill, so
 install that plugin (see [Installation](#installation)) before using the pipeline.
 
-After each chunk of up to three scenarios the orchestrator stops at the review gate rather than crossing it:
+After each chunk of up to three steps the orchestrator stops at the review gate rather than crossing it:
 `/start-session` runs `/review`, which invokes `review-orchestrator`, which runs `semantic-review`, `security-review`,
 `performance-review`, and `concurrency-review` in parallel and returns a single pass/block decision as JSON.
 `/start-session` commits the chunk only when that decision is `pass` and the index still matches the tree the gate
@@ -187,8 +192,8 @@ passed.
   (lockfiles excluded) and records the index tree and HEAD for the next delta. Reviewers read the file, so the diff
   can be any size. `--mark-pass` records the tree a passing gate saw, and `--check-pass` refuses a commit whose index
   has changed since.
-- Before every gate the orchestrator runs the production build and the end-to-end command, and the plan puts
-  the scenario that crosses the real boundary first. Facts only the real environment shows are cheaper to meet
+- Before every gate the orchestrator runs the production build and the end-to-end command. The acceptance test
+  crosses the real boundary, and the plan puts the cycle that meets it early. Facts only the real environment shows are cheaper to meet
   there than as a blocking finding.
 - An orchestrator run is a chunk of at most three TDD cycles that ends in a JSON checkpoint. `/start-session`
   checks it with `git status --short` and the test command, then gates and commits it before the next chunk.

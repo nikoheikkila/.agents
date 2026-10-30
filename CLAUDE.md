@@ -50,7 +50,8 @@ npx skills add <owner/repo@skill> -g -y   # install a new one globally
 
 Nine user-level subagents adapted from the
 [MinimumCD agentic-CD guide](https://beyond.minimumcd.org/docs/agentic-cd/architecture/agent-configuration/):
-`orchestrator` routes an implementation session and, for each scenario, spawns `tdd-red` (failing test),
+`orchestrator` runs the ATDD loop for a spec's one scenario: `tdd-red` writes the failing acceptance test, and then,
+for each TDD cycle in the spec's plan, it spawns `tdd-red` (failing unit test),
 `tdd-green` (minimum code), and `tdd-refactor` (simplest design) in sequence.
 The phase agents preload the `tdd:red`, `tdd:green`, and
 `tdd:refactor` skills from `plugins/tdd`, so that plugin must be installed for them to load their rules.
@@ -89,19 +90,23 @@ they are invoked by a named parent and need a pre-assembled diff they will not c
 - **The caller triages before routing.** Verify each blocking finding against the code or the platform docs, drop
   the ones whose scenario does not hold, and batch the ones that need a product decision into one question. The
   accepted-risk list travels with every round so a settled concern is not raised again.
-- **Move the real-environment facts left.** The orchestrator orders scenarios boundary-first (the thinnest slice
-  that runs across the real CI, service, or runtime boundary comes first), adds risk scenarios (empty input,
-  each failure path reported once, untrusted text in markup, temp resources), and runs the production build and
-  end-to-end command before it hands off to the gate.
-- **An orchestrator run is a chunk, not a session.** At most three TDD cycles or one fix round per run, ending in
+- **Move the real-environment facts left.** The acceptance test crosses the real CI, service, or runtime boundary
+  wherever the test setup allows, and the cycle plan puts the cycle that meets that boundary early. The orchestrator
+  runs the production build and end-to-end command before it hands off to the gate.
+- **An orchestrator run is a chunk, not a session.** At most three steps (the acceptance test or a TDD cycle) or one fix round per run, ending in
   a JSON checkpoint with `git_status` and `not_done`. The caller verifies the checkpoint, so a claim like "fixed"
   is only as good as the evidence attached to it. Each chunk is reviewed and committed on its own.
 
 ### The Session Loop
 
 `/specify` writes `specs/<slug>.md` (`Type: feature | bugfix`, with a short bugfix mode) and the feature file.
-`/start-session <spec>` commits the spec, creates `feat/` or `fix/<slug>` unless the repo is trunk-based, then
-loops chunk → `/review` → commit, and sets the spec to `Status: done` with the last chunk. `/end-session` commits
+A spec holds exactly one scenario, which becomes the ATDD acceptance test. A feature spec ends in a §5 TDD cycle
+plan of at most six unit-level cycles, the last of which makes the acceptance test pass; a bugfix has none, and
+Green works directly against the regression test. The acceptance test is committed under a strict expected-to-fail
+marker (`xfail(strict=True)`, `test.fails`), so every chunk lands green, and the marker trips when the behaviour is
+done. `/start-session <spec>` commits the spec, creates `feat/` or `fix/<slug>` unless the repo is trunk-based, then
+runs the steps (`A`, then cycles `1..n`) at most three per chunk (chunk → `/review` → commit), refuses a spec with
+more than one scenario or no cycle plan, and sets the spec to `Status: done` when the acceptance test passes. `/end-session` commits
 nothing: it pushes, opens the pull request from the ledger, and watches the run. `/fix` classifies a red run
 (`test`, `build`, `lint`, `config`, `environment`, `flaky`), routes the first four through the orchestrator, and
 reviews, commits, pushes, and watches the fix, at most twice.

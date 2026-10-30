@@ -1,6 +1,6 @@
 ---
 name: specify
-description: Interactively co-write the specification for the next small change before any code exists - intent description with a testable hypothesis, BDD scenarios, feature description (musts, must nots, preferences, escalation triggers), and acceptance criteria with evaluation design - then validate the set and write it out for the orchestrator. Use when the user asks to specify, spec out, write a spec or requirements for, or define acceptance criteria for a feature or change; when they want Gherkin or BDD scenarios drafted from an idea; when they want an intent, user story, or hypothesis sharpened or critiqued; when they have a vague idea and want to be interviewed before building; and when they ask whether a spec is consistent or ready for implementation. Also use for a bug report, defect, or issue that needs a regression scenario before it is fixed, and before `/start-session` or the orchestrator on any change that has no spec. Not for implementing code, writing tests from an existing feature file (tdd:red), or reviewing a diff (review).
+description: Interactively co-write the specification for the next small change before any code exists - intent description with a testable hypothesis, one BDD scenario as the acceptance test, feature description (musts, must nots, preferences, escalation triggers), acceptance criteria with evaluation design, and a plan of TDD cycles that make the acceptance test pass - then validate the set and write it out for the orchestrator. Use when the user asks to specify, spec out, write a spec or requirements for, or define acceptance criteria for a feature or change; when they want a spec broken into TDD cycles or smaller chunks, or say a spec is too big to implement; when they want Gherkin or BDD scenarios drafted from an idea; when they want an intent, user story, or hypothesis sharpened or critiqued; when they have a vague idea and want to be interviewed before building; and when they ask whether a spec is consistent or ready for implementation. Also use for a bug report, defect, or issue that needs a regression scenario before it is fixed, and before `/start-session` or the orchestrator on any change that has no spec. Not for implementing code, writing tests from an existing feature file (tdd:red), or reviewing a diff (review).
 ---
 
 # Specify
@@ -10,6 +10,9 @@ Help a human write the specification for **one** small change, following
 and the [Agent Delivery Contract](https://beyond.minimumcd.org/docs/agentic-cd/specification/first-class-artifacts/).
 The result is four artifacts that an autonomous implementer can use as pipeline inputs:
 intent description, user-facing behaviour, feature description, and acceptance criteria.
+Each spec holds exactly one scenario, which is the acceptance test of the ATDD loop, plus
+a TDD cycle plan that breaks that test down into the unit-level cycles `/start-session`
+implements in small chunks.
 
 Read `references/artifacts.md` before you draft or write any artifact. It has the
 definition, owner, and template for each one, plus a complete worked example.
@@ -26,11 +29,13 @@ Every rule below depends on them.
    numbers, thresholds, or hypothesis. If one is missing, ask for it. The value of a spec
    is that it says what _they_ want, so a polished spec built on your guesses is worse than
    a rough spec built on theirs.
-2. **Specify one thin vertical slice.** That means a single behaviour that can ship on its
-   own, not a feature set. If specifying it would take the human more than about 15
-   minutes, the change is too big. Propose a split into slices that each deliver
-   independently, let the human pick one, and record the others under _Later slices_. A
-   detailed spec for months of work adds risk instead of removing it.
+2. **Specify one scenario.** A spec is one thin vertical slice: one behaviour, one
+   feature scenario, one acceptance test. It is not a feature set. If the intent needs a
+   second scenario, it needs a second spec. Propose a split into slices that each deliver
+   independently, let the human pick one, and record the others under _Later slices_,
+   where each one becomes the seed of its own spec. If specifying the slice would take the
+   human more than about 15 minutes, it is too big. A detailed spec for months of work adds
+   risk instead of removing it.
 3. **Higher-authority artifacts win.** The order is intent > user-facing behavior >
    feature description > acceptance criteria > system constraints > implementation. When
    two artifacts conflict, propose changing the lower one, unless the human decides the
@@ -59,6 +64,10 @@ Every rule below depends on them.
    - **Discovery loop**: the human has only a vague idea, or says they don't know where to
      start. Interview them first, and don't critique yet.
    - **Validation gate**: all four artifacts already exist. Go straight to the gate.
+   - **Re-slicing**: a spec exists, but it has more than one scenario or no TDD cycle
+     plan (older specs have a _Task Decomposition_ or _Chunk Plan_), or `/start-session`
+     refused it. Ask the human which scenario this spec keeps, move the others out of the
+     feature file and under _Later slices_, draft stage 5, and run the gate.
    - **Bugfix mode**: the input is a bug report, a defect, or an issue describing behaviour
      the system was already meant to have. Use the short path below, not the four stages.
 3. Before you go deep, check scope against ground rule 2. Splitting is cheapest now.
@@ -67,15 +76,16 @@ Every rule below depends on them.
 
 A bugfix should take the human about five minutes to specify, not fifteen. It uses the
 bugfix template in `references/artifacts.md`: observed, expected, impact, one regression
-scenario, and a done definition. Hypothesis, constraint architecture, or task
-decomposition are not needed.
+scenario, and a done definition. A hypothesis, a constraint architecture, and a cycle
+plan are not needed. The regression scenario is the acceptance test, and Green works
+directly against it.
 
 1. If the input is an issue number, read it (`gh issue view <n>`) and record `Issue: #<n>` to context.
 2. Draft the observed, expected, and impact lines from the report. Mark anything the
    report does not say as `[assumed]`.
 3. Draft one regression scenario whose `Then` step fails, written by the `gherkin` skill's
-   rules. Add a second scenario only when
-   the bug sits on a boundary and the neighbouring value must keep working.
+   rules. When the bug sits on a boundary and the neighbouring value must keep working,
+   make it a Scenario Outline with a row for each side. It is still one scenario.
 4. Run one critique round, capped at three findings: is the expected behaviour actually
    agreed, is the regression scenario observable, and could the fix break a Must Not.
 5. Run the gate with only the Clarity, Testability, Scope, and Self-containment checks.
@@ -98,8 +108,8 @@ Use this format for findings, so the human can answer by number:
 ```
 
 The tags are `ambiguity`, `assumption`, `missing`, `edge-case`, `split`, `hypothesis`,
-`vague-scenario`, `conflict`, and `terminology`. Finish with one line asking which findings
-they accept, reject, or want to change. Then show the refined artifact.
+`vague-scenario`, `conflict`, `terminology`, and `cycle-plan`. Finish with one line asking
+which findings they accept, reject, or want to change. Then show the refined artifact.
 
 ### 1. Intent Description
 
@@ -115,22 +125,26 @@ The intent says what the change should do and why, never how. Check it for:
   What else could produce the same outcome? A weak hypothesis costs one prompt to catch
   now and a whole delivery cycle to discover after deployment.
 
-### 2. User-Facing Behaviour (BDD Scenarios)
+### 2. User-Facing Behaviour (BDD Scenario)
 
 You draft this artifact; the human curates it. Load the `gherkin` skill before you draft or
-critique any scenario. This stage decides which behaviours need scenarios, and `gherkin`
-decides how each one is written. Once the human approves the intent:
+critique the scenario. This stage decides which behaviour the spec pins down, and `gherkin`
+decides how it is written. Once the human approves the intent:
 
-1. Generate Gherkin scenarios covering the primary success path, key error paths, and edge
-   cases. Give each scenario one line on why it matters.
+1. Draft the candidate scenarios the intent implies: the primary success path, the key
+   error paths, and the edge cases, with one line each on why it matters.
 2. Ask the human what is missing. Then hunt for gaps yourself: boundary conditions,
    concurrent access, failure modes, and interactions with existing behaviour.
-3. Challenge vague scenarios. Flag any scenario that two implementations could both pass
-   while showing users different behaviour. Every `Then` must be something the user or the
+3. Ask the human to pick the **one** scenario this spec delivers. Suggest the thinnest one
+   that delivers value on its own, which is usually the primary success path. Each other
+   candidate becomes a _Later slices_ entry. A boundary value of the same behaviour is not
+   a second scenario: it becomes a row in the chosen scenario's Examples table.
+4. Challenge the chosen scenario. Flag it if two implementations could both pass it while
+   showing users different behaviour. Every `Then` must be something the user or the
    caller can observe, not internal state.
 
-The human decides which scenarios stay. Your job is to make sure they considered more
-scenarios than they would have alone.
+The human decides which scenario stays. Your job is to make sure they considered more
+scenarios than they would have alone, and that the ones they set aside are recorded.
 
 ### 3. Feature Description (Constraint Architecture)
 
@@ -154,15 +168,57 @@ The human makes the architectural decisions and sets the thresholds.
 ### 4. Acceptance Criteria
 
 - **Done definition**: observable outcomes that someone who has never seen the code could
-  verify. Functional criteria come from the scenarios. Non-functional criteria come from
+  verify. Functional criteria come from the scenario. Non-functional criteria come from
   the feature description.
 - **Evaluation design**: test cases with known-good outputs (input → expected result),
   including the empty and failure cases.
-- **Consistency**: check the criteria against the intent, scenarios, and feature
+- **Consistency**: check the criteria against the intent, the scenario, and the feature
   description, and raise contradictions or gaps as findings.
 
-Then add a short **task decomposition**. List the modules or tasks with explicit inputs and
-outputs, each under about two hours of work. A single task is fine for a small slice.
+### 5. TDD Cycle Plan
+
+The spec follows the ATDD loop. Its one scenario is the outer loop: it becomes one
+acceptance test, written first, that fails until the change is done. The cycle plan is the
+inner loop: the TDD cycles (one failing unit test, the minimum code, a refactor) that make
+the acceptance test pass. `/start-session` runs the plan in chunks of at most three steps,
+and reviews and commits each chunk. So the plan sets the size of every chunk. You draft it
+and the human approves it.
+
+- **Acceptance test**: name the layer it drives. That is the outermost layer the repository
+  already tests at, such as the HTTP API through the test client, the CLI, a UI component,
+  or a public module interface. Say what it substitutes, if anything. Let it cross the
+  real boundary (database, service, runtime) wherever the test setup allows, so a fact
+  only the real environment shows fails here and not in review.
+- **Cycles**, in order. Each one has:
+  - one unit behaviour in a sentence ("the limiter denies a request once the count reaches
+    the limit"), small enough for one failing test;
+  - the unit it targets (module, class, or function) and the files it touches;
+  - one example with a known-good output (input → expected result), taken from the
+    evaluation design where possible;
+  - the done-definition items and test cases it closes, if any.
+
+Rules for the plan:
+
+- **Each cycle builds only on earlier ones, and the last cycle makes the acceptance test
+  pass.** The last cycle is usually the wiring. Put the cycle that meets the real boundary
+  early.
+- **Every chunk is safe to land.** `/start-session` may commit straight to the default
+  branch. The acceptance test is committed with a strict expected-to-fail marker, which
+  keeps the suite green until the last cycle trips the marker. Users must not reach
+  anything half-built before that, which is another reason to put the wiring last.
+- **Cycles serve only this scenario.** A cycle may pin a property that the scenario relies
+  on, such as the count being per client or the window resetting. A cycle that adds
+  user-facing behaviour the scenario never exercises, such as an extra error response or a
+  second format, is a hidden scenario. Move it under _Later slices_.
+- **Each cycle is under about an hour of work.** Cap the plan at six cycles. A plan that
+  needs more means the scenario is too big. Split it with the `gherkin` skill, keep the
+  first part, and move the rest under _Later slices_.
+- **Zero cycles is allowed** when the acceptance test alone is a small enough target. Green
+  then works directly against it, and no marker is needed. Say so in the plan. This is
+  typical for a bugfix or a thin wiring change.
+
+Present the plan in the template's format, with one line per cycle saying why it sits
+where it does. Then critique it like any other stage, using the `cycle-plan` tag.
 
 ## Discovery Loop
 
@@ -199,20 +255,21 @@ memory of the conversation.
 
 ## Validation Gate
 
-Before anyone generates a test or writes code, review all four artifacts together. Each
-one can look fine alone and still contradict the others. Report each check as `pass` or
-with numbered findings:
+Before anyone generates a test or writes code, review all four artifacts and the cycle
+plan together. Each one can look fine alone and still contradict the others. Report each
+check as `pass` or with numbered findings:
 
 | Check            | Question                                                                                            |
 | ---------------- | --------------------------------------------------------------------------------------------------- |
 | Clarity          | Could two developers read the intent differently?                                                   |
-| Testability      | Does every scenario have a clear, observable outcome?                                               |
+| Testability      | Does the scenario have a clear, observable outcome?                                                 |
 | Scope            | Does the feature description constrain the work to what the intent needs, without over-engineering? |
 | Terminology      | Is each concept named the same way in all four artifacts?                                           |
-| Completeness     | Does the intent imply any behavior that has no scenario?                                            |
+| Completeness     | Does the intent imply any behaviour that is neither the scenario nor a _Later slices_ entry?        |
 | Conflict         | Does anything in one artifact contradict another?                                                   |
 | Hypothesis       | Is there a way to validate it after deployment, using data that will exist?                         |
 | Self-containment | Could an agent implement from these documents alone, with no questions?                             |
+| Cycle plan       | Is there exactly one scenario? Does the acceptance test name its layer, does each cycle have one example with a known-good output, are there at most six cycles, and does the last one make the acceptance test pass? |
 
 The human gates on this review. Resolve all findings through the critique cycle; the
 lower-authority artifact changes by default. All findings the human explicitly chooses to live
@@ -225,12 +282,14 @@ The same conflict caught during implementation costs a session.
 When the gate passes:
 
 1. Finalize `specs/<slug>.md` from the template, and set `Status: ready`.
-2. Write `feature/<slug>.feature` with the approved scenarios. This is the file `tdd:red`
-   reads. The spec links to it and does not repeat it, so the two can't drift apart.
+2. Write `feature/<slug>.feature` with the one approved scenario. This is the file
+   `tdd:red` reads. The spec links to it and does not repeat it, so the two can't drift apart.
 3. If the project already uses a different convention (`features/`, `docs/specs/`, and so
    on), follow it and tell the human.
 
-Finish with a short message that gives the two paths, the deferred _Later slices_, and the
+Finish with a short message that gives the two paths, the scenario name, the number of
+cycles, the deferred _Later slices_ (each one a candidate for the next `/specify`), and the
 next step: `/start-session specs/<slug>.md`. That command commits the spec, creates the
-branch, and runs the orchestrator with the spec as its feature description and the scenarios
-as its plan. Don't start implementation or test generation yourself unless the human asks.
+branch, and runs the orchestrator over the plan in chunks. The first chunk writes the
+acceptance test, and the last one makes it pass. Don't start implementation or test generation yourself
+unless the human asks.

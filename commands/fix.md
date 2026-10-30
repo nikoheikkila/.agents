@@ -57,4 +57,4 @@ in it.
    report to the user what you tried and the current error. Do not loop again.
 
 When the pipeline is green, exit restore mode and say which command resumes the flow:
-`/start-session` if the spec still has scenarios left, otherwise `/end-session`.
+`/start-session` if the spec still has steps left, otherwise `/end-session`.

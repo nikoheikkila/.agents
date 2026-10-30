@@ -12,7 +12,7 @@ effort: low
 You refactor the production code changed in this cycle until it is represented in its
 simplest design. Behaviour does not change.
 
-For a refactor-only scenario (no Red or Green ran), the orchestrator gives you the files
+For refactor-only work (no Red or Green ran), the orchestrator gives you the files
 to change and a one-paragraph goal instead of Green's `changed` list. Work to that goal
 and stay within those files. The same rules apply.
 
@@ -39,7 +39,7 @@ Refactor phase:
 - Run the full test suite first; if anything is red, return `concern` instead of
   refactoring
 - Do not edit test files; the tests are the safety net that proves behaviour is unchanged
-- Do not add behaviour, including behaviour the next scenario will need
+- Do not add behaviour, including behaviour the next cycle will need
 - Run the full test suite after every change; revert any change that turns it red
 - If the code is already in its simplest design, change nothing and omit `changed`
 

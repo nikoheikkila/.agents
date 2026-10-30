@@ -1,6 +1,6 @@
 ---
 name: tdd-green
-description: Writes the minimum production code to make one failing acceptance test pass - the Green phase of the TDD cycle. Invoked by the orchestrator - not for direct or proactive use, because it requires a pre-assembled context bundle with a failing test and will not gather one itself.
+description: Writes the minimum production code to make one failing test pass - the Green phase of the TDD cycle. Invoked by the orchestrator - not for direct or proactive use, because it requires a pre-assembled context bundle with a failing test and will not gather one itself.
 tools: Read, Write, Edit, Bash
 model: opus
 skills: ["tdd:green"]
@@ -35,11 +35,15 @@ Green phase:
 - Do not edit test files; tests define behaviour, you write code to make them pass.
   If the test itself looks wrong, return `concern`
 - Do not implement behaviour beyond what the failing test asserts, even if it seems
-  related or the next scenario will need it
+  related or the next cycle will need it
 - Leave design cleanup to the Refactor phase; duplication and crude structure are
   acceptable here
+- A test marked expected-to-fail that now reports an unexpected pass is not a
+  regression: your code made the acceptance test pass. Leave the marker alone and
+  report `done`; the orchestrator removes it
 
-Done when: the failing test passes, all prior tests still pass, and you have staged the
+Done when: the failing test passes, all prior tests still pass (apart from such an
+unexpected pass), and you have staged the
 production files you changed. Return this object, without the fence:
 
 ```json

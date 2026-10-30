@@ -6,7 +6,7 @@ Definitions, templates, and a worked example. The source is the MinimumCD
 ## Contents
 
 1. Artifacts, owners, and authority
-2. The `specs/<slug>.md` template
+2. The `specs/<slug>.md` template, with the TDD cycle plan
 3. The bugfix template
 4. The `feature/<slug>.feature` template
 5. Worked example: rate limiting `/api/search`
@@ -16,7 +16,7 @@ Definitions, templates, and a worked example. The source is the MinimumCD
 | Priority | Artifact             | What it is                                                                 | Owner                           |
 | -------- | -------------------- | -------------------------------------------------------------------------- | ------------------------------- |
 | 1        | Intent description   | A self-contained problem statement: what the change does and why, with a hypothesis. Never how. | Human. The agent critiques it but never writes it. |
-| 2        | User-facing behavior | Observable outcomes from the user's point of view, written as BDD scenarios. | Human picks the scenarios. The agent may draft them. |
+| 2        | User-facing behavior | One observable outcome from the user's point of view, written as one BDD scenario. It is the ATDD acceptance test. | Human picks the scenario. The agent may draft candidates. |
 | 3        | Feature description  | The constraint architecture: Musts, Must Nots, Preferences, and Escalation Triggers. Non-functional requirements go here as constraints. | Engineering. |
 | 4        | Acceptance criteria  | A done definition (observable outcomes) plus an evaluation design (test cases with known-good outputs). Derived from 2 (functional) and 3 (non-functional). | Human defines. The agent may write the test code. |
 | 5        | System constraints   | Global rules that apply to every change, such as security, performance, architecture, and operations. They live in the repo, not in each spec. | Organization. |
@@ -50,7 +50,7 @@ Validated after deployment by <metric / data source> over <time window>.
 
 ## 2. User-Facing Behavior
 
-See `feature/<slug>.feature`. <One line per scenario name, so a reader can scan coverage.>
+See `feature/<slug>.feature`. <The scenario name, so a reader knows what the acceptance test pins down.>
 
 ## 3. Feature Description
 
@@ -76,9 +76,27 @@ See `feature/<slug>.feature`. <One line per scenario name, so a reader can scan 
 ### Evaluation design
 **Test Case 1 (<name>):** <input/setup>. Result: <known-good output>.
 
-## 5. Task Decomposition
+## 5. TDD Cycle Plan
 
-**<Module or task>**: Input: ... Output: ... (under about two hours)
+The scenario is the ATDD outer loop: one acceptance test, written first and committed with a
+strict expected-to-fail marker. The cycles are the inner loop that makes it pass.
+`/start-session` runs the steps (`A`, then cycles `1` to `n`) in chunks of at most three,
+and commits each chunk. Six cycles at most.
+
+### Acceptance test
+
+- Drives: <the outermost layer the repo tests at, such as the HTTP API through the test client>
+- Substitutes: <test doubles at the edge, or "none">
+- Closes: Done definition <n>; Test Case <n>
+
+### Cycle 1: <unit behaviour in a few words>
+
+- Unit: <module, class, or function>. Touches: <files>
+- Example: <input> → <expected output>
+- Closes: Done definition <n>; Test Case <n> (omit when none)
+
+<For a zero-cycle plan, replace the cycles with a `### Cycles` heading and the line "None:
+Green works directly against the acceptance test.">
 
 ## Later slices
 
@@ -96,8 +114,9 @@ See `feature/<slug>.feature`. <One line per scenario name, so a reader can scan 
 ## 3. Bugfix template
 
 A bugfix restores behaviour the system was already meant to have, so it skips the
-hypothesis, the constraint architecture, and the task decomposition. The regression
-scenario is the whole plan. Use the same `specs/<slug>.md` path and a `fix-` slug prefix.
+hypothesis, the constraint architecture, and the cycle plan. The regression scenario is
+the acceptance test, Green works directly against it, and the fix lands in one chunk.
+Use the same `specs/<slug>.md` path and a `fix-` slug prefix.
 
 ```markdown
 # Specification: <what is broken, in the user's words>
@@ -115,8 +134,9 @@ Feature file: feature/<slug>.feature
 
 ## 2. User-Facing Behavior
 
-See `feature/<slug>.feature`: one regression scenario that fails today. Add a second
-scenario only when the bug sits on a boundary and the neighbouring value must keep working.
+See `feature/<slug>.feature`: one regression scenario that fails today. When the bug sits
+on a boundary and the neighbouring value must keep working, make it a Scenario Outline
+with a row for each side.
 
 ## 3. Constraints
 
@@ -135,8 +155,8 @@ public API". Omit the section when there are none.>
 
 ## 4. `feature/<slug>.feature` template
 
-Each `Then` must be observable by the user or caller. Use `Background` for shared
-preconditions, and `Scenario Outline` with `Examples` for boundary values. The `gherkin`
+One scenario per file, and each `Then` must be observable by the user or caller. Use a
+`Scenario Outline` with `Examples` for boundary values of the same behaviour. The `gherkin`
 skill has the full language and style rules.
 
 ```gherkin
@@ -161,7 +181,7 @@ Feature: <slice name>
 > **Hypothesis:** We believe rate limiting will reduce p99 latency for well-behaved clients
 > by 40% because abusive clients currently consume 60% of search capacity.
 
-**Scenarios**
+**Scenario**
 
 ```gherkin
 Scenario: Client exceeds rate limit
@@ -171,14 +191,11 @@ Scenario: Client exceeds rate limit
   Then the response status is 429
   And the response includes a Retry-After header
   And the Retry-After value indicates when the limit resets
-
-Scenario: Client within rate limit
-  Given an authenticated client
-  And the client has made 50 requests in the current minute
-  When the client makes a request to /api/search
-  Then the request is processed normally
-  And the response includes rate limit headers showing remaining quota
 ```
+
+The human also drafted "Client within rate limit", which shows the remaining quota in
+response headers. That is a different behaviour, so it went under _Later slices_ as the
+next spec.
 
 **Feature description**
 
@@ -195,17 +212,38 @@ Scenario: Client within rate limit
 
 **Acceptance criteria**
 
-1. 100 requests in one minute get normal responses, with headers showing the remaining
-   quota.
-2. The 101st request in the same minute gets a 429 with a Retry-After header.
-3. After the window expires, the limited client can make requests normally again.
+1. The 101st request in one minute gets a 429 with a Retry-After header that says when
+   the limit resets.
+2. Requests up to the 100th in the same minute are processed normally.
+3. After the window expires, the limited client is served again.
 4. Another client is unaffected by one client's limit.
 5. The middleware adds less than 5 ms to p99 latency.
 
-Evaluation design: Happy Path (50 requests → all 200, remaining count goes down), Limit
-Exceeded (the 101st request → 429), Window Reset (the request after the window → 200),
-Per-Client Isolation (A over its limit, B → 200), Latency Budget (< 5 ms).
+Evaluation design: Limit Reached (100 requests made → the 101st gets 429 and
+`Retry-After: 20` when 20 s of the window remain), Under Limit (99 made → the 100th gets
+200), Window Reset (the request after the window → 200), Per-Client Isolation (A over its
+limit, B → 200), Latency Budget (< 5 ms).
+
+**TDD cycle plan**
+
+- Acceptance test: drives `/api/search` through the app's HTTP test client, with the real
+  middleware chain and the Redis test instance. Closes criterion 1 and Limit Reached.
+- Cycle 1, _Count requests per client_: `RequestCounter` over Redis. Example: client A
+  increments three times and B once → A = 3, B = 1. Closes criterion 4 and Per-Client
+  Isolation. It goes first because it meets Redis.
+- Cycle 2, _Expire counts with the window_: `RequestCounter`. Example: 100 requests at
+  12:00:30, read at 12:01:31 → 0. Closes criterion 3 and Window Reset.
+- Cycle 3, _Decide allow or deny_: `RateLimiter.check(client, now)`. Example: count 99 →
+  allowed; count 100 with 20 s of the window left → denied, retry after 20. Closes
+  criterion 2 and Under Limit.
+- Cycle 4, _Reject with 429_: the middleware, registered between authentication and the
+  search handler. Example: a denied check → 429 with `Retry-After: 20`. This cycle makes
+  the acceptance test pass. Closes criterion 5 and Latency Budget.
 
 Why this passes the gate: every criterion is observable from outside the code. The
 escalation triggers name the two decisions the human had not yet made. The hypothesis
-names a metric (p99 latency for well-behaved clients) that exists after deployment.
+names a metric (p99 latency for well-behaved clients) that exists after deployment. The
+spec holds one scenario, and the remaining-quota behaviour waits for its own spec. Each
+cycle builds on the one before it, the first meets Redis, and the last wires the
+middleware in, which is the first point at which a client can be rejected. Until then,
+every chunk lands with the acceptance test marked expected-to-fail.

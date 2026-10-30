@@ -34,7 +34,8 @@ ad hoc review: take the context from the conversation and skip every ledger step
 2. Assemble the review orchestrator's context in this order:
    a. Feature description: §3 of the spec named by `ledger.sh show <slug> spec`
       [stable within this feature - often cached]
-   b. Current plan: the spec's feature file and the scenarios in the last `chunk` line
+   b. Current plan: the spec's feature file, and the §5 entries for the steps in the last
+      `chunk` line
       [changes per session]
    c. Accepted-risk list: `ledger.sh show <slug> risk`, plus anything the user has said is
       out of scope, one line each

@@ -13,7 +13,7 @@ chunk, so this command commits nothing.
    outside ignored files. If it does, stop: the work belongs in a `/start-session` chunk,
    where the gate reviews it.
 2. **The session is finished.** The spec's `Status:` is `done` and the ledger has a
-   `summary` line. If not, stop, and say `/start-session` has scenarios left.
+   `summary` line. If not, stop, and say `/start-session` has steps left.
 3. **The base is green.** Run
    `gh run list --branch <default branch> -L 1 --json conclusion,status,headSha`. If the
    latest run on the default branch failed, stop: that is not this branch's fault, but
@@ -29,7 +29,7 @@ chunk, so this command commits nothing.
    none, run `gh pr create`. Use the spec's slice name as the title, in Conventional Commit
    form. The body has:
    - the intent, in two or three lines from spec §1
-   - the scenarios delivered, one per line
+   - the scenario delivered, and its TDD cycles one per line
    - **Deferred**: every `defer` line from the ledger
    - **Accepted risks**: every `risk` line from the ledger
    - **Validate after deploy**: the hypothesis metric, data source, and time window from
