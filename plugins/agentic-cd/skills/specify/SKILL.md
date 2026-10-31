@@ -1,6 +1,6 @@
 ---
 name: specify
-description: Interactively co-write the specification for the next small change before any code exists - intent description with a testable hypothesis, one BDD scenario as the acceptance test, feature description (musts, must nots, preferences, escalation triggers), acceptance criteria with evaluation design, and a plan of TDD cycles that make the acceptance test pass - then validate the set and write it out for the orchestrator. Use when the user asks to specify, spec out, write a spec or requirements for, or define acceptance criteria for a feature or change; when they want a spec broken into TDD cycles or smaller chunks, or say a spec is too big to implement; when they want Gherkin or BDD scenarios drafted from an idea; when they want an intent, user story, or hypothesis sharpened or critiqued; when they have a vague idea and want to be interviewed before building; and when they ask whether a spec is consistent or ready for implementation. Also use for a bug report, defect, or issue that needs a regression scenario before it is fixed, and before `/start-session` or the orchestrator on any change that has no spec. Not for implementing code, writing tests from an existing feature file (tdd:red), or reviewing a diff (review).
+description: Interactively co-write the specification for the next small change before any code exists - intent description with a testable hypothesis, one BDD scenario as the acceptance test, feature description (musts, must nots, preferences, escalation triggers), acceptance criteria with evaluation design, and a plan of TDD cycles that make the acceptance test pass - then validate the set and write it out for the orchestrator. Use when the user asks to specify, spec out, write a spec or requirements for, or define acceptance criteria for a feature or change; when they want a spec broken into TDD cycles or smaller chunks, or say a spec is too big to implement; when they want Gherkin or BDD scenarios drafted from an idea; when they want an intent, user story, or hypothesis sharpened or critiqued; when they have a vague idea and want to be interviewed before building; and when they ask whether a spec is consistent or ready for implementation. Also use for a bug report, defect, or issue that needs a regression scenario before it is fixed, and before `/start-session` or the orchestrator on any change that has no spec. Not for implementing code, writing tests from an existing feature file (agentic-cd:tdd-red), or reviewing a diff (review).
 ---
 
 # Specify
@@ -283,7 +283,7 @@ When the gate passes:
 
 1. Finalize `specs/<slug>.md` from the template, and set `Status: ready`.
 2. Write `feature/<slug>.feature` with the one approved scenario. This is the file
-   `tdd:red` reads. The spec links to it and does not repeat it, so the two can't drift apart.
+   `agentic-cd:tdd-red` reads. The spec links to it and does not repeat it, so the two can't drift apart.
 3. If the project already uses a different convention (`features/`, `docs/specs/`, and so
    on), follow it and tell the human.
 

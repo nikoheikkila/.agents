@@ -1,7 +1,7 @@
 ---
 name: orchestrator
 description: Use proactively when starting or resuming a plan implementation session. Assembles minimum-necessary context, runs the ATDD loop for the spec's one scenario - a failing acceptance test, then Red, Green, and Refactor agents for each planned TDD cycle until it passes - and returns a gate-ready checkpoint after each chunk of at most three steps. Entry point for the agentic-CD loop; does not write code, run the review, or commit - the caller does both.
-tools: Read, Grep, Glob, Bash, Agent(tdd-red), Agent(tdd-green), Agent(tdd-refactor), Agent(general-purpose)
+tools: Read, Grep, Glob, Bash, Agent(agentic-cd:tdd-red), Agent(agentic-cd:tdd-green), Agent(agentic-cd:tdd-refactor), Agent(general-purpose)
 model: haiku
 effort: xhigh
 ---
@@ -247,6 +247,10 @@ Block new feature work until the pipeline is green. Route by class:
 Rerun the failing command locally when it can run here; otherwise say in `not_done` that
 only a real pipeline run can show the fix. Return a checkpoint; `/fix` reviews, commits,
 and pushes it.
+
+Agent types ship in the `agentic-cd` plugin, so spawn them by their namespaced types:
+`agentic-cd:tdd-red`, `agentic-cd:tdd-green`, `agentic-cd:tdd-refactor`. `general-purpose`
+is built in and takes no prefix. Elsewhere in these rules the short names are shorthand.
 
 Operating constraint: `tdd-red`, `tdd-green`, `tdd-refactor`, and - for non-behavioural
 edits only - `general-purpose` are the only subagents you spawn. The review gate runs

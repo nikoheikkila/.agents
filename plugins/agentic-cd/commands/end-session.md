@@ -2,11 +2,11 @@
 description: Close out an implementation session - verify every gate, push, open the pull request, watch the pipeline, and point at the next slice.
 argument-hint: "[specs/slug.md]"
 disable-model-invocation: true
-allowed-tools: Read, Grep, Glob, Skill(fix), Skill(mutation-testing), Bash(git status:*), Bash(git log:*), Bash(git push:*), Bash(git rev-parse:*), Bash(git symbolic-ref:*), Bash(gh run list:*), Bash(gh run watch:*), Bash(gh pr view:*), Bash(gh pr create:*), Bash(*/scripts/ledger.sh:*)
+allowed-tools: Read, Grep, Glob, Skill(agentic-cd:fix), Skill(agentic-cd:mutation-testing), Bash(git status:*), Bash(git log:*), Bash(git push:*), Bash(git rev-parse:*), Bash(git symbolic-ref:*), Bash(gh run list:*), Bash(gh run watch:*), Bash(gh pr view:*), Bash(gh pr create:*), Bash(*/scripts/ledger.sh:*)
 ---
 
 Complete the session. Spec: $ARGUMENTS (when empty, use `ledger.sh find`). The scripts are
-in `~/.claude/skills/review/scripts/`. `/start-session` already reviewed and committed every
+in `${CLAUDE_PLUGIN_ROOT}/skills/review/scripts/`. `/start-session` already reviewed and committed every
 chunk, so this command commits nothing.
 
 1. **Everything is committed.** `git status --short` must show nothing staged or modified

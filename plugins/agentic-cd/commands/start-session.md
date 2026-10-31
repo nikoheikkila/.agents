@@ -2,7 +2,7 @@
 description: Start or resume an implementation session from a ready spec - branch, TDD chunks, review gate, and one commit per chunk.
 argument-hint: "<specs/slug.md | #issue | bug description>"
 disable-model-invocation: true
-allowed-tools: Read, Grep, Glob, Edit, Skill(specify), Skill(review), Agent(orchestrator), Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(git switch:*), Bash(git rev-parse:*), Bash(git symbolic-ref:*), Bash(gh issue view:*), Bash(*/scripts/ledger.sh:*), Bash(*/scripts/review-diff.sh:*), Bash(task:*)
+allowed-tools: Read, Grep, Glob, Edit, Skill(agentic-cd:specify), Skill(agentic-cd:review), Agent(agentic-cd:orchestrator), Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(git switch:*), Bash(git rev-parse:*), Bash(git symbolic-ref:*), Bash(gh issue view:*), Bash(*/scripts/ledger.sh:*), Bash(*/scripts/review-diff.sh:*), Bash(task:*)
 ---
 
 Start or resume an implementation session. Input: $ARGUMENTS
@@ -11,7 +11,7 @@ You own the session loop: chunk, review gate, commit, repeat. The `orchestrator`
 context assembly and the TDD phase agents. Do not invoke `tdd-red`, `tdd-green`, or
 `tdd-refactor` directly, and never commit work the gate has not passed.
 
-The scripts live in the review skill's directory: `~/.claude/skills/review/scripts/`.
+The scripts live in the review skill's directory: `${CLAUDE_PLUGIN_ROOT}/skills/review/scripts/`.
 `ledger.sh` is the session's memory. Record each step in it as it happens, never from
 memory afterwards, so a `/clear` or a new conversation loses nothing.
 

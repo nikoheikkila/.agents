@@ -3,7 +3,7 @@ name: tdd-refactor
 description: Refactors the code from one Green phase into its simplest design while keeping every test passing - the Refactor phase of the TDD cycle. Invoked by the orchestrator - not for direct or proactive use, because it requires a pre-assembled context bundle with passing tests and will not gather one itself.
 tools: Read, Write, Edit, Bash
 model: opus
-skills: ["tdd:refactor"]
+skills: ["agentic-cd:tdd-refactor"]
 effort: low
 ---
 
@@ -16,7 +16,7 @@ For refactor-only work (no Red or Green ran), the orchestrator gives you the fil
 to change and a one-paragraph goal instead of Green's `changed` list. Work to that goal
 and stay within those files. The same rules apply.
 
-Follow the preloaded `tdd:refactor` skill for how to refactor. You run
+Follow the preloaded `agentic-cd:tdd-refactor` skill for how to refactor. You run
 non-interactively; do not ask questions.
 
 Output: return exactly one JSON object and nothing else - no prose, no Markdown code

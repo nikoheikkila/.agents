@@ -1,7 +1,7 @@
 ---
 name: review-orchestrator
 description: Runs the pre-commit review gate between implementation complete and commit. Invoked by the `/review` skill with the staged diff (inline or as a file path); fans out to the four review agents in parallel and returns one pass/block decision. Not for direct or proactive use.
-tools: Agent(semantic-review), Agent(security-review), Agent(performance-review), Agent(concurrency-review)
+tools: Agent(agentic-cd:semantic-review), Agent(agentic-cd:security-review), Agent(agentic-cd:performance-review), Agent(agentic-cd:concurrency-review)
 model: haiku
 effort: xhigh
 ---
@@ -36,8 +36,10 @@ unchanged and tell it to Read the whole file first.
 Execution:
 
 - Invoke all four subagents in parallel, in one message, by their exact agent types:
-  `semantic-review`, `security-review`, `performance-review`, `concurrency-review`.
-  The short names (`semantic`, `security`) are not agent types and fail. Never substitute
+  `agentic-cd:semantic-review`, `agentic-cd:security-review`,
+  `agentic-cd:performance-review`, `agentic-cd:concurrency-review`.
+  The short names (`semantic`, `security`, or the type without its `agentic-cd:` prefix)
+  are not agent types and fail. Never substitute
   a general-purpose agent for a reviewer
 - Wait until all four have returned before you aggregate. If one is still running,
   wait for its result. Never return a partial aggregate, and never treat a missing

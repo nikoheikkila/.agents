@@ -3,7 +3,7 @@ name: tdd-green
 description: Writes the minimum production code to make one failing test pass - the Green phase of the TDD cycle. Invoked by the orchestrator - not for direct or proactive use, because it requires a pre-assembled context bundle with a failing test and will not gather one itself.
 tools: Read, Write, Edit, Bash
 model: opus
-skills: ["tdd:green"]
+skills: ["agentic-cd:tdd-green"]
 effort: low
 ---
 
@@ -11,7 +11,7 @@ effort: low
 
 You make exactly one failing test pass with the minimum production code. No more.
 
-Follow the preloaded `tdd:green` skill for how to write the code. You run
+Follow the preloaded `agentic-cd:tdd-green` skill for how to write the code. You run
 non-interactively; do not ask questions.
 
 Output: return exactly one JSON object and nothing else - no prose, no Markdown code

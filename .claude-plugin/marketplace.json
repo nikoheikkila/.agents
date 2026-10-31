@@ -11,9 +11,9 @@
       "description": "Generates screen-reader-compatible alt text for images, with a dedicated Claude Code subagent for non-interactive use."
     },
     {
-      "name": "tdd",
-      "source": "./plugins/tdd",
-      "description": "Test-driven development workflow skills for the Red-Green-Refactor cycle."
+      "name": "agentic-cd",
+      "source": "./plugins/agentic-cd",
+      "description": "Agentic continuous-delivery workflow: /specify, /start-session, /review, /fix, and /end-session, with TDD phase agents and a four-reviewer gate. Replaces the tdd plugin."
     }
   ]
 }

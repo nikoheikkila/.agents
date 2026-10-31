@@ -2,9 +2,7 @@
 !/.gitignore
 !/CLAUDE.md
 !/README.md
-!/commands
 
-!/agents
 !/skills
 /skills/synced/
 !/plugins

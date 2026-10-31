@@ -12,23 +12,21 @@ resolves.
 Remote: `git@github.com:nikoheikkila/.agents.git`. The repo is public because Claude Code installs plugins from GitHub,
 not from this working copy.
 
-## Three Delivery Mechanisms — Know Which One You Are Editing
+## Two Delivery Mechanisms — Know Which One You Are Editing
 
 Each top-level directory reaches Claude Code a different way. Getting this wrong means an edit that appears correct but
 never loads.
 
 | Directory   | Reaches the agent via                                                               | Authoring rule                                      |
 | ----------- | ----------------------------------------------------------------------------------- | --------------------------------------------------- |
-| `commands/` | Whole-directory symlink `~/.claude/commands -> ../.agents/commands`                 | Edit freely; live immediately, no install step      |
-| `skills/`   | Whole-directory symlink `~/.claude/skills -> ../.agents/skills`                     | Vendored: do not hand-edit. Authored: `review`, `specify`, `gherkin` |
+| `skills/`   | Whole-directory symlink `~/.claude/skills -> ../.agents/skills`                     | Vendored: do not hand-edit. Authored skills live in `plugins/agentic-cd` |
 | `plugins/`  | GitHub marketplace `nikoheikkila-agents`, installed into `~/.claude/plugins/cache/` | Own authored work goes here; requires push + update |
-| `agents/`   | Whole-directory symlink `~/.claude/agents -> ../.agents/agents`                     | Edit freely; live immediately at next session start |
 
 ### `Skills/` Is Mostly Vendored
 
-`review` is an authored skill: the pre-commit review gate, with its `scripts/review-diff.sh` in the skill's
-`scripts/` directory. It is not in `.skill-lock.json`, so `npx skills update` should leave it alone. Since 2026-10-03,
-`~/.claude/skills` is one symlink to this directory, so a new skill directory loads without any per-skill link.
+Authored skills (`review`, `specify`, `gherkin`, `mutation-testing`, `tdd-red`, `tdd-green`, `tdd-refactor`) moved into
+`plugins/agentic-cd/skills/` on 2026-10-31, so they are no longer reached by the `~/.claude/skills` symlink and
+`npx skills update` never sees them. The symlink still serves the vendored skills below.
 
 `skills/synced/` is written by the claude.ai skill sync. It is account-specific, not authored here, and git-ignored.
 Never edit or commit it. The rest of this section is about the vendored skills.
@@ -46,15 +44,23 @@ npx skills update                         # pull them, rewriting skills/ and .sk
 npx skills add <owner/repo@skill> -g -y   # install a new one globally
 ```
 
-### `Agents/` Is the Agentic-CD Pipeline
+### `plugins/agentic-cd` Is the Agentic-CD Pipeline
 
-Nine user-level subagents adapted from the
+One plugin holds the whole workflow: the nine agents, the commands `start-session`, `end-session`, `fix`, and
+`reflect`, and the skills `specify`, `review`, `gherkin`, `mutation-testing` (called by `/end-session`), `tdd-red`,
+`tdd-green`, and `tdd-refactor`. The old `tdd` plugin is removed. Plugin components are namespaced, so reference them as
+`agentic-cd:<name>` wherever a mechanism needs an exact name: `Agent(agentic-cd:tdd-red)` allowlists, `skills:`
+frontmatter (`agentic-cd:tdd-red`), and `Skill(agentic-cd:review)` in `allowed-tools`. A bare name fails there. The
+commands reach the scripts as `${CLAUDE_PLUGIN_ROOT}/skills/review/scripts/`, not through `~/.claude/skills`.
+Edits are live only after push + marketplace update.
+
+Nine subagents, shipped as plugin agents, adapted from the
 [MinimumCD agentic-CD guide](https://beyond.minimumcd.org/docs/agentic-cd/architecture/agent-configuration/):
 `orchestrator` runs the ATDD loop for a spec's one scenario: `tdd-red` writes the failing acceptance test, and then,
 for each TDD cycle in the spec's plan, it spawns `tdd-red` (failing unit test),
 `tdd-green` (minimum code), and `tdd-refactor` (simplest design) in sequence.
-The phase agents preload the `tdd:red`, `tdd:green`, and
-`tdd:refactor` skills from `plugins/tdd`, so that plugin must be installed for them to load their rules.
+The phase agents preload the `agentic-cd:tdd-red`, `agentic-cd:tdd-green`, and
+`agentic-cd:tdd-refactor` skills from the same plugin.
 The review gate is separate: `/review` invokes `review-orchestrator`, which fans out to `semantic-review`,
 `security-review`, `performance-review`, and `concurrency-review`. The orchestrator never spawns the review
 orchestrator and never commits. It returns a gate-ready checkpoint per chunk, and `/start-session` runs `/review`
@@ -99,7 +105,7 @@ they are invoked by a named parent and need a pre-assembled diff they will not c
 
 ### The Session Loop
 
-`/specify` writes `specs/<slug>.md` (`Type: feature | bugfix`, with a short bugfix mode) and the feature file.
+`/specify` (`/agentic-cd:specify`) writes `specs/<slug>.md` (`Type: feature | bugfix`, with a short bugfix mode) and the feature file.
 A spec holds exactly one scenario, which becomes the ATDD acceptance test. A feature spec ends in a §5 TDD cycle
 plan of at most six unit-level cycles, the last of which makes the acceptance test pass; a bugfix has none, and
 Green works directly against the regression test. The acceptance test is committed under a strict expected-to-fail
@@ -111,9 +117,10 @@ nothing: it pushes, opens the pull request from the ledger, and watches the run.
 (`test`, `build`, `lint`, `config`, `environment`, `flaky`), routes the first four through the orchestrator, and
 reviews, commits, pushes, and watches the fix, at most twice.
 
-Session state lives in `skills/review/scripts/ledger.sh`: an append-only log per slug in
+Session state lives in `plugins/agentic-cd/skills/review/scripts/ledger.sh`: an append-only log per slug in
 `$(git rev-parse --git-dir)/agentic/`, so it survives `/clear` without touching the working tree. The commands
-reach both scripts as `~/.claude/skills/review/scripts/`, which depends on the whole-directory `skills/` symlink.
+reach both scripts as `${CLAUDE_PLUGIN_ROOT}/skills/review/scripts/`, so they work from the installed plugin cache
+with no symlink.
 
 ### `Plugins/` Is the Authored Surface
 
@@ -125,7 +132,8 @@ Every plugin needs three things in agreement:
 
 A plugin skill's frontmatter `name` must equal its directory name, and it is invoked as `<plugin>:<skill>`.
 
-Publishing a plugin change is not just a commit: the installed copy is pinned to a `gitCommitSha` in
+Publishing a plugin change is not just a commit (migrating from the removed `tdd` plugin needs
+`/plugin uninstall tdd@nikoheikkila-agents` once): the installed copy is pinned to a `gitCommitSha` in
 `~/.claude/plugins/installed_plugins.json`, so changes are invisible until pushed and pulled back down:
 
 ```bash
@@ -152,6 +160,6 @@ claude # then: /plugin marketplace update nikoheikkila-agents
 
 ## `/reflect`
 
-`commands/reflect.md` is the maintenance loop for this repo and others: after a session, record friction as
+`plugins/agentic-cd/commands/reflect.md` is the maintenance loop for this repo and others: after a session, record friction as
 repo-wide instructions in `AGENTS.md`, human-facing docs in `README.md`, and skill amendments under `.claude/skills/`.
 When run here, amendments belong in this repo's own `skills/` or `plugins/` per the routing table above.

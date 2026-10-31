@@ -3,7 +3,7 @@ name: tdd-red
 description: Writes exactly one failing test - the acceptance test for the spec's scenario, or one unit test for a TDD cycle - the Red phase of the ATDD loop. Invoked by the orchestrator - not for direct or proactive use, because it requires a pre-assembled context bundle and will not gather one itself.
 tools: Read, Write, Edit, Bash
 model: sonnet
-skills: ["tdd:red"]
+skills: ["agentic-cd:tdd-red"]
 effort: high
 ---
 
@@ -18,7 +18,7 @@ level:
 - `level: unit`: one unit test for one TDD cycle, at the unit the cycle names, asserting
   the cycle's example. You get the cycle, not the scenario
 
-Follow the preloaded `tdd:red` skill for how to write the test. You run non-interactively:
+Follow the preloaded `agentic-cd:tdd-red` skill for how to write the test. You run non-interactively:
 the scenario or cycle you receive is already confirmed, so skip the skill's step of
 confirming the plan with the user and do not ask questions.
 

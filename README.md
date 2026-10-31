@@ -10,8 +10,11 @@ Add the marketplace once, then install whichever plugins you need:
 ```bash
 /plugin marketplace add nikoheikkila/.agents
 /plugin install alt-text-generator@nikoheikkila-agents
-/plugin install tdd@nikoheikkila-agents
+/plugin install agentic-cd@nikoheikkila-agents
 ```
+
+The `agentic-cd` plugin replaces the old `tdd` plugin. If you installed that, remove it with
+`/plugin uninstall tdd@nikoheikkila-agents`.
 
 Installed plugins are pinned to a commit SHA, so a change pushed to this repo isn't picked up automatically. Update
 with:
@@ -33,16 +36,19 @@ Generates screen-reader-compatible alt text for images.
 - Agent `alt-text-generator` — a noninteractive subagent (no clarifying questions, no preamble) that reads an image
   and returns alt text, intended for use by other agents or automation rather than direct chat.
 
-### `tdd`
+### `agentic-cd`
 
-Skills for the Red-Green-Refactor test-driven development cycle:
+The whole agentic continuous-delivery workflow in one plugin (the old `tdd` plugin is deprecated and removed; its
+skills live here now). Everything is invoked as `/agentic-cd:<name>`, and the bare name works while it is unambiguous.
 
-- `red` — write a failing test first, driven from Gherkin/BDD feature files, before any implementation exists.
-- `green` — implement the minimal code needed to make a failing test pass, without over-engineering.
-- `refactor` — improve code quality and design once tests are green, without changing behaviour.
+- Commands: `start-session`, `end-session`, `fix`, `reflect`.
+- Skills: `specify`, `review`, `gherkin`, `mutation-testing` (called by `/end-session`), and the TDD phase skills
+  `tdd-red`, `tdd-green`, `tdd-refactor` (preloaded by the phase agents; `/agentic-cd:tdd-red` etc., formerly `/tdd:red`).
+- Agents: `orchestrator`, `tdd-red`, `tdd-green`, `tdd-refactor`, `review-orchestrator`, `semantic-review`,
+  `security-review`, `performance-review`, `concurrency-review`.
 
-Invoke as `/tdd:red`, `/tdd:green`, `/tdd:refactor`, or let them trigger on natural mentions of starting a TDD cycle,
-making a test pass, or cleaning up passing code.
+The sections below describe each part. Paths such as `commands/start-session.md` are relative to
+`plugins/agentic-cd/`.
 
 ## Commands
 
@@ -52,7 +58,7 @@ human-facing docs into `README.md`, and skill amendments under `.claude/skills/`
 under this repo's own `skills/`/`plugins/`).
 
 The review gate is the skill `skills/review` (invoked as `/review`); see [How the gate converges](#how-the-gate-converges).
-The three commands here drive the agentic-CD pipeline in `agents/`, starting from a spec written with the `specify`
+The commands here drive the agentic-CD pipeline in `agents/`, starting from a spec written with the `specify`
 skill:
 
 - `commands/start-session.md` → `/start-session <spec | #issue | bug>` — commits the spec, creates the feature
@@ -67,7 +73,7 @@ skill:
 `/start-session` and `/end-session` carry `disable-model-invocation: true` — type those yourself. `/review` and `/fix`
 stay model-invocable, because `/start-session` runs `/review` for every chunk and a red pipeline should pull in `/fix`
 without being asked. Session state survives `/clear` in a ledger under the git directory
-(`skills/review/scripts/ledger.sh`).
+(`skills/review/scripts/ledger.sh`, reached through `${CLAUDE_PLUGIN_ROOT}`).
 
 ## Agentic CD Workflow
 
@@ -155,7 +161,7 @@ sequenceDiagram
 
 ## Subagents
 
-`agents/` holds a nine-agent pre-commit pipeline adapted from the
+`plugins/agentic-cd/agents/` holds a nine-agent pre-commit pipeline adapted from the
 [MinimumCD agentic-CD guide](https://beyond.minimumcd.org/docs/agentic-cd/architecture/agent-configuration/).
 `orchestrator` is the entry point — ask it to start working on an implementation from a plan,
 and it assembles the minimum context, writes the spec's acceptance test, and runs the planned TDD cycles until it
@@ -172,8 +178,7 @@ repo-relative paths and the test command, never file contents or logs — so the
 The orchestrator never edits a file itself: tests and behaviour go through the three phase agents, and anything
 else (config, manifests, docs) goes to a `general-purpose` subagent. Its Bash use is limited to running tests and git.
 Between phases the orchestrator re-runs each agent's test command itself, reading only the exit code and a short tail, and it hashes the Red test files so a
-later phase that edits a test is caught and re-run. The phase agents preload the matching `tdd` plugin skill, so
-install that plugin (see [Installation](#installation)) before using the pipeline.
+later phase that edits a test is caught and re-run. The phase agents preload the matching `agentic-cd` skill, which ship in the same plugin.
 
 After each chunk of up to three steps the orchestrator stops at the review gate rather than crossing it:
 `/start-session` runs `/review`, which invokes `review-orchestrator`, which runs `semantic-review`, `security-review`,
@@ -198,23 +203,20 @@ passed.
 - An orchestrator run is a chunk of at most three TDD cycles that ends in a JSON checkpoint. `/start-session`
   checks it with `git status --short` and the test command, then gates and commits it before the next chunk.
 
-They reach Claude Code through a whole-directory symlink, created once:
-
-```sh
-ln -s ../.agents/agents ~/.claude/agents
-```
+They are plugin agents, so their types are namespaced (`agentic-cd:tdd-red`, and so on), and the
+`Agent(...)` allowlists in their frontmatter use those names.
 
 Only `orchestrator` is meant to be invoked directly; the other eight expect a context bundle from their parent
 and will not gather one themselves.
 
 ## Skills
 
-`skills/review` is authored here: it prepares the staged diff with its bundled `scripts/review-diff.sh`, spawns
+The `review` skill (`/agentic-cd:review`) prepares the staged diff with its bundled `scripts/review-diff.sh`, spawns
 `review-orchestrator`, triages blocking findings, and runs up to three rounds (full, then delta). On a pass it fixes
 the cheap, in-scope advisory findings (stale docs, dead code, missing tests) before the commit and defers the rest.
 
-Every skill reaches Claude Code through one whole-directory symlink, created once (the review subagents come from the
-`agents/` symlink above):
+The plugin skills are delivered by the plugin. The remaining skills in `skills/` reach Claude Code through one
+whole-directory symlink, created once:
 
 ```sh
 ln -s ../.agents/skills ~/.claude/skills

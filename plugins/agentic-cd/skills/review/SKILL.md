@@ -1,7 +1,7 @@
 ---
 name: review
 description: Run the pre-commit review gate on the staged diff. Use when the user asks to review staged changes, run the review gate, or check whether changes are ready to commit, and when the TDD cycle reports it is done.
-allowed-tools: Read, Grep, Glob, Bash(git diff:*), Bash(git status:*), Bash(git add:*), Bash(*/scripts/review-diff.sh:*), Bash(*/scripts/ledger.sh:*), Agent(review-orchestrator), Agent(orchestrator)
+allowed-tools: Read, Grep, Glob, Bash(git diff:*), Bash(git status:*), Bash(git add:*), Bash(*/scripts/review-diff.sh:*), Bash(*/scripts/ledger.sh:*), Agent(agentic-cd:review-orchestrator), Agent(agentic-cd:orchestrator)
 ---
 
 Run the pre-commit review gate. The gate is cheap only if it converges, so it runs in

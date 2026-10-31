@@ -1,5 +1,5 @@
 ---
-name: green
+name: tdd-green
 description: >-
   Implement minimal code to make failing unit tests pass without over-engineering.
   Use when there is a failing test that needs the simplest possible implementation
