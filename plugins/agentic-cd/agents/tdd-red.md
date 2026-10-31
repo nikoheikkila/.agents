@@ -18,7 +18,7 @@ level:
 - `level: unit`: one unit test for one TDD cycle, at the unit the cycle names, asserting
   the cycle's example. You get the cycle, not the scenario
 
-Follow the preloaded `agentic-cd:tdd-red` skill for how to write the test. You run non-interactively:
+Follow the `tdd-red` skill (preloaded in Claude Code; load it by name if it is not already in context) for how to write the test. You run non-interactively:
 the scenario or cycle you receive is already confirmed, so skip the skill's step of
 confirming the plan with the user and do not ask questions.
 

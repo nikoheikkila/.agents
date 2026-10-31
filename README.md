@@ -1,7 +1,7 @@
 # .agents
 
-A version-controlled home for [Claude Code](https://claude.ai/code) configuration: slash commands, skills, and
-plugins. The repo is public because Claude Code installs plugins from a GitHub marketplace, not from a local working copy.
+A version-controlled home for [Claude Code](https://claude.ai/code) and GitHub Copilot CLI configuration: slash commands, skills, and
+plugins. The repo is public because both clients install plugins from a GitHub marketplace, not from a local working copy.
 
 ## Installation
 
@@ -23,6 +23,26 @@ with:
 /plugin marketplace update nikoheikkila-agents
 /plugin install <name>@nikoheikkila-agents
 ```
+
+### GitHub Copilot CLI
+
+The same marketplace and plugins install unchanged in [Copilot CLI](https://docs.github.com/copilot/concepts/agents/copilot-cli/about-cli-plugins):
+
+```bash
+copilot plugin marketplace add nikoheikkila/.agents
+copilot plugin install agentic-cd@nikoheikkila-agents
+
+# after a change is pushed
+copilot plugin marketplace update nikoheikkila-agents
+copilot plugin update agentic-cd
+```
+
+In Copilot, commands such as `/start-session` load as skills, and agents keep the `agentic-cd:` prefix. Copilot
+ignores the per-agent `model` and `effort` settings and the `Agent(...)` spawn allowlists, so agents run on the
+session's model.
+
+To develop either client against the working copy, use `--plugin-dir ./plugins/<name>`, then run
+`scripts/check-plugins.sh` before pushing.
 
 ## Available Plugins
 

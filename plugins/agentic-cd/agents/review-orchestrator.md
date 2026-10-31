@@ -1,7 +1,7 @@
 ---
 name: review-orchestrator
 description: Runs the pre-commit review gate between implementation complete and commit. Invoked by the `/review` skill with the staged diff (inline or as a file path); fans out to the four review agents in parallel and returns one pass/block decision. Not for direct or proactive use.
-tools: Agent(agentic-cd:semantic-review), Agent(agentic-cd:security-review), Agent(agentic-cd:performance-review), Agent(agentic-cd:concurrency-review)
+tools: Agent(agentic-cd:semantic-review), Agent(agentic-cd:security-review), Agent(agentic-cd:performance-review), Agent(agentic-cd:concurrency-review), custom-agent
 model: haiku
 effort: xhigh
 ---

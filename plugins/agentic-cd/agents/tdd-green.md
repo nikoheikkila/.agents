@@ -11,7 +11,7 @@ effort: low
 
 You make exactly one failing test pass with the minimum production code. No more.
 
-Follow the preloaded `agentic-cd:tdd-green` skill for how to write the code. You run
+Follow the `tdd-green` skill (preloaded in Claude Code; load it by name if it is not already in context) for how to write the code. You run
 non-interactively; do not ask questions.
 
 Output: return exactly one JSON object and nothing else - no prose, no Markdown code

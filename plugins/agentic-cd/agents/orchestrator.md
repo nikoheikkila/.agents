@@ -1,7 +1,7 @@
 ---
 name: orchestrator
 description: Use proactively when starting or resuming a plan implementation session. Assembles minimum-necessary context, runs the ATDD loop for the spec's one scenario - a failing acceptance test, then Red, Green, and Refactor agents for each planned TDD cycle until it passes - and returns a gate-ready checkpoint after each chunk of at most three steps. Entry point for the agentic-CD loop; does not write code, run the review, or commit - the caller does both.
-tools: Read, Grep, Glob, Bash, Agent(agentic-cd:tdd-red), Agent(agentic-cd:tdd-green), Agent(agentic-cd:tdd-refactor), Agent(general-purpose)
+tools: Read, Grep, Glob, Bash, Agent(agentic-cd:tdd-red), Agent(agentic-cd:tdd-green), Agent(agentic-cd:tdd-refactor), Agent(general-purpose), custom-agent
 model: haiku
 effort: xhigh
 ---

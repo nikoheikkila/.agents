@@ -11,7 +11,7 @@ You own the session loop: chunk, review gate, commit, repeat. The `orchestrator`
 context assembly and the TDD phase agents. Do not invoke `tdd-red`, `tdd-green`, or
 `tdd-refactor` directly, and never commit work the gate has not passed.
 
-The scripts live in the review skill's directory: `${CLAUDE_PLUGIN_ROOT}/skills/review/scripts/`.
+The scripts live in the review skill's directory: `${CLAUDE_PLUGIN_ROOT}/skills/review/scripts/` (if that variable is not expanded, `../skills/review/scripts/` relative to this file).
 `ledger.sh` is the session's memory. Record each step in it as it happens, never from
 memory afterwards, so a `/clear` or a new conversation loses nothing.
 

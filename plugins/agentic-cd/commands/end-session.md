@@ -6,7 +6,7 @@ allowed-tools: Read, Grep, Glob, Skill(agentic-cd:fix), Skill(agentic-cd:mutatio
 ---
 
 Complete the session. Spec: $ARGUMENTS (when empty, use `ledger.sh find`). The scripts are
-in `${CLAUDE_PLUGIN_ROOT}/skills/review/scripts/`. `/start-session` already reviewed and committed every
+in `${CLAUDE_PLUGIN_ROOT}/skills/review/scripts/` (if that variable is not expanded, `../skills/review/scripts/` relative to this file). `/start-session` already reviewed and committed every
 chunk, so this command commits nothing.
 
 1. **Everything is committed.** `git status --short` must show nothing staged or modified

@@ -16,7 +16,7 @@ For refactor-only work (no Red or Green ran), the orchestrator gives you the fil
 to change and a one-paragraph goal instead of Green's `changed` list. Work to that goal
 and stay within those files. The same rules apply.
 
-Follow the preloaded `agentic-cd:tdd-refactor` skill for how to refactor. You run
+Follow the `tdd-refactor` skill (preloaded in Claude Code; load it by name if it is not already in context) for how to refactor. You run
 non-interactively; do not ask questions.
 
 Output: return exactly one JSON object and nothing else - no prose, no Markdown code

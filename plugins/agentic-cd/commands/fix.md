@@ -8,7 +8,7 @@ Enter pipeline-restore mode. Load minimum context only. Failure to restore: $ARG
 
 You own the restore loop. The `orchestrator` owns routing the fix to a phase agent; do not
 invoke `tdd-green` or `general-purpose` directly. The scripts are in
-`${CLAUDE_PLUGIN_ROOT}/skills/review/scripts/`. If `ledger.sh find` names a session, record each step
+`${CLAUDE_PLUGIN_ROOT}/skills/review/scripts/` (if that variable is not expanded, `../skills/review/scripts/` relative to this file). If `ledger.sh find` names a session, record each step
 in it.
 
 1. **Identify the failure.** Resolve the run from the argument:
