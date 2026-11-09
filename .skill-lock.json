@@ -37,6 +37,15 @@
       "pluginName": "example-skills",
       "installedAt": "2026-10-16T16:20:23.272Z",
       "updatedAt": "2026-10-16T16:20:23.272Z"
+    },
+    "vitest": {
+      "source": "antfu/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/antfu/skills.git",
+      "skillPath": "skills/vitest/SKILL.md",
+      "skillFolderHash": "be4e34bc66369fd35b4de2ed50d9f3e8af5b133a",
+      "installedAt": "2026-11-09T16:28:51.643Z",
+      "updatedAt": "2026-11-09T16:28:51.643Z"
     }
   },
   "dismissed": {
