@@ -5,7 +5,7 @@
 #   ledger.sh show <slug> [kind]            print the log, or only the lines of one kind
 #   ledger.sh find                          print the slug of the newest log for the current branch
 #
-# Kinds: spec, issue, branch, acceptance, chunk, review, risk, defer, commit, push, summary.
+# Kinds: spec, issue, branch, acceptance, answer, chunk, review, risk, defer, commit, push, summary.
 #
 # The log lives in $(git rev-parse --git-dir)/agentic, so it survives /clear and a new
 # conversation but never shows up in git status, a review diff, or a commit. Each worktree

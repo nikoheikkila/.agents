@@ -93,7 +93,8 @@ they are invoked by a named parent and need a pre-assembled diff they will not c
   excluded, because an 80 KB diff does not fit in a prompt) and records the index tree and HEAD; `--delta` produces
   only what the fixes changed, and falls back to a full diff once HEAD has moved. On a pass, `--mark-pass` records
   the passed tree, and the committer runs `--check-pass` so nothing staged after the review gets committed. Delta rounds check that each previous blocker closed and that the delta added nothing
-  new. Round 3 still blocking goes to the user, not to a fourth round.
+  new. Round 3 still blocking goes to the user, not to a fourth round. A `review-orchestrator` that reports the
+  review is not complete is resumed, never replaced: a second `--delta` on an unchanged index writes an empty diff.
 - **The caller triages before routing.** Verify each blocking finding against the code or the platform docs, drop
   the ones whose scenario does not hold, and batch the ones that need a product decision into one question. The
   accepted-risk list travels with every round so a settled concern is not raised again.
@@ -101,14 +102,18 @@ they are invoked by a named parent and need a pre-assembled diff they will not c
   wherever the test setup allows, and the cycle plan puts the cycle that meets that boundary early. The orchestrator
   runs the production build and end-to-end command before it hands off to the gate.
 - **An orchestrator run is a chunk, not a session.** At most three steps (the acceptance test or a TDD cycle) or one fix round per run, ending in
-  a JSON checkpoint with `git_status` and `not_done`. The caller verifies the checkpoint, so a claim like "fixed"
-  is only as good as the evidence attached to it. Each chunk is reviewed and committed on its own.
+  a JSON checkpoint with `git_status` and `not_done`. The caller checks each claim in the checkpoint against the
+  files, so a claim like "fixed" is only as good as the evidence attached to it. Each chunk is reviewed and committed
+  on its own, and the caller then stops that chunk's orchestrators, so the next chunk starts a new one. The user's
+  answers to an orchestrator's questions go into the ledger as `answer` lines and go into every resume message and
+  every later chunk.
 
 ### The Session Loop
 
 `/specify` (`/agentic-cd:specify`) writes `specs/<slug>.md` (`Type: feature | bugfix`, with a short bugfix mode) and the feature file.
 A spec holds exactly one scenario, which becomes the ATDD acceptance test. A feature spec ends in a §5 TDD cycle
-plan of at most six unit-level cycles, the last of which makes the acceptance test pass; a bugfix has none, and
+plan of at most six unit-level cycles, the last of which makes the acceptance test pass. Each step's `Tests` line
+lists the affected tests, built with `grep`, and the orchestrator passes it to `tdd-red`. A bugfix has no cycles, and
 Green works directly against the regression test. The acceptance test is committed under a strict expected-to-fail
 marker (`xfail(strict=True)`, `test.fails`), so every chunk lands green, and the marker trips when the behaviour is
 done. `/start-session <spec>` commits the spec, creates `feat/` or `fix/<slug>` unless the repo is trunk-based, then

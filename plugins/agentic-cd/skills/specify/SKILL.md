@@ -86,9 +86,11 @@ directly against it.
 3. Draft one regression scenario whose `Then` step fails, written by the `gherkin` skill's
    rules. When the bug sits on a boundary and the neighbouring value must keep working,
    make it a Scenario Outline with a row for each side. It is still one scenario.
-4. Run one critique round, capped at three findings: is the expected behaviour actually
+4. Build the template's `Tests` line with `grep`, as _Affected tests_ in stage 5
+   describes, for the code the report implicates.
+5. Run one critique round, capped at three findings: is the expected behaviour actually
    agreed, is the regression scenario observable, and could the fix break a Must Not.
-5. Run the gate with only the Clarity, Testability, Scope, and Self-containment checks.
+6. Run the gate with only the Clarity, Testability, Scope, and Self-containment checks.
 
 If the "bug" turns out to be new behaviour nobody agreed on, say so and switch to critique
 mode. A feature disguised as a bugfix skips the hypothesis and the constraints it needs.
@@ -193,9 +195,20 @@ and the human approves it.
   - one unit behaviour in a sentence ("the limiter denies a request once the count reaches
     the limit"), small enough for one failing test;
   - the unit it targets (module, class, or function) and the files it touches;
+  - its affected tests: the existing test files that cover the files it touches;
   - one example with a known-good output (input → expected result), taken from the
     evaluation design where possible;
   - the done-definition items and test cases it closes, if any.
+- **Affected tests**: build each step's `Tests` line with `grep`, never from file names or
+  memory. For a cycle, search the test files for each file it touches, by import path and
+  by the unit's name:
+  `grep -rlE '<import path>|<UnitName>' --include='<test file glob>' --exclude-dir=node_modules .`
+  For the acceptance test, search for the layer's entry point instead, such as the route,
+  the command, or the component. List every hit. When there are none, write
+  `none (grep: <pattern>)`, so a reader can tell an empty result from a skipped search. The
+  orchestrator hands this list to `tdd-red` as the tests to extend, and a guessed list
+  misses the test that imports the module through a re-export or lives in an unexpected
+  directory.
 
 Rules for the plan:
 
@@ -269,7 +282,7 @@ check as `pass` or with numbered findings:
 | Conflict         | Does anything in one artifact contradict another?                                                   |
 | Hypothesis       | Is there a way to validate it after deployment, using data that will exist?                         |
 | Self-containment | Could an agent implement from these documents alone, with no questions?                             |
-| Cycle plan       | Is there exactly one scenario? Does the acceptance test name its layer, does each cycle have one example with a known-good output, are there at most six cycles, and does the last one make the acceptance test pass? |
+| Cycle plan       | Is there exactly one scenario? Does the acceptance test name its layer, does every step have a `Tests` line built with `grep`, does each cycle have one example with a known-good output, are there at most six cycles, and does the last one make the acceptance test pass? |
 
 The human gates on this review. Resolve all findings through the critique cycle; the
 lower-authority artifact changes by default. All findings the human explicitly chooses to live

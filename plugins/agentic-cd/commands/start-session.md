@@ -2,7 +2,7 @@
 description: Start or resume an implementation session from a ready spec - branch, TDD chunks, review gate, and one commit per chunk.
 argument-hint: "<specs/slug.md | #issue | bug description>"
 disable-model-invocation: true
-allowed-tools: Read, Grep, Glob, Edit, Skill(agentic-cd:specify), Skill(agentic-cd:review), Agent(agentic-cd:orchestrator), Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(git switch:*), Bash(git rev-parse:*), Bash(git symbolic-ref:*), Bash(gh issue view:*), Bash(*/scripts/ledger.sh:*), Bash(*/scripts/review-diff.sh:*), Bash(task:*)
+allowed-tools: Read, Grep, Glob, Edit, Skill(agentic-cd:specify), Skill(agentic-cd:review), Agent(agentic-cd:orchestrator), SendMessage, TaskStop, Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(git switch:*), Bash(git rev-parse:*), Bash(git symbolic-ref:*), Bash(gh issue view:*), Bash(*/scripts/ledger.sh:*), Bash(*/scripts/review-diff.sh:*), Bash(task:*)
 ---
 
 Start or resume an implementation session. Input: $ARGUMENTS
@@ -49,7 +49,7 @@ Skip this step when `ledger.sh show <slug> branch` already has a line; that is a
 ## 3. Run the Next Chunk
 
 A chunk is the next one to three steps, in plan order, that no line in
-`ledger.sh show <slug> chunk` lists as done. Delegate that chunk to the `orchestrator`
+`ledger.sh show <slug> chunk` lists as done. Delegate that chunk to a new `orchestrator`
 subagent. Pass it only:
 
 - The spec path and the feature file path. It reads §3 (or §3 Constraints for a bugfix) as
@@ -59,6 +59,8 @@ subagent. Pass it only:
   it not to start any step outside the chunk
 - The acceptance test's path and run command, from `ledger.sh show <slug> acceptance`,
   once step `A` is done
+- Every line of `ledger.sh show <slug> answer`, as answers it applies and does not ask
+  again
 - The last chunk line, as the prior session summary
 
 If the orchestrator returns `questions`, present them to the user as one batch, each with
@@ -66,15 +68,36 @@ its recommended default and any feasibility risk it found, so the user answers o
 instead of once per surprise. Show its `assumptions` in the same message. If it returns
 no questions, don't stop for a confirmation: show the assumptions in one line each and
 let it run. Users answered "accept defaults" to nearly every confirmation, so a question
-that has a safe default costs a round trip for nothing. After the user answers, or straight
-away when there were no questions, tell the orchestrator that the scope is confirmed.
+that has a safe default costs a round trip for nothing.
 
-It returns a checkpoint after at most three steps. Verify it yourself:
-`git status --short`, and the test command it names, judged by exit code. If a checkpoint
-arrives while a phase agent is still running (its `done` is empty, or the files it lists
-are not in `git status --short`), wait for that agent's completion notification before
-you verify or re-dispatch anything. If a run ends with a plan instead of finished work,
-resend the confirmation and tell it to dispatch `tdd-red` now; do not re-explain the scope.
+Then resume the same orchestrator (`SendMessage` to its agent ID); it already holds the
+chunk's context. When the user has answered, record each answer as one `answer` line,
+`<question> → <answer>`, and put every answer in the resume message verbatim, after its
+question, followed by the scope confirmation. A resume that says only "confirmed" leaves
+the orchestrator on its own defaults, and the user's answers are lost. When there were no
+questions, send the confirmation alone.
+
+It returns a checkpoint after at most three steps. If the checkpoint arrives while a phase
+agent is still running (its `done` is empty, or the files it lists are not in
+`git status --short`), wait for that agent's completion notification before you verify or
+re-dispatch anything. If a run ends with a plan instead of finished work, resume it with
+the same answers and the confirmation, and tell it to dispatch `tdd-red` now; do not
+re-explain the scope.
+
+Check the report against the files before you record anything. A checkpoint is a claim,
+and only the working tree confirms it:
+
+- `git_status` matches your own `git status --short`, path for path
+- every test that `done` claims exists in the file it names: grep the file for the test's
+  name
+- `acceptance.test` exists, and its expected-to-fail marker is in the file for a
+  `checkpoint` and gone from it for `complete`: grep for the marker
+- the test command passes, judged by its exit code, and the test count it prints matches
+  the count in `done`
+- for `complete`, the acceptance test's `run` command passes as well
+
+When a check fails, resume the orchestrator with the failed checks, one line each, and
+check its next report the same way. Do not fix the files yourself.
 
 Record the verified checkpoint as one `chunk` line that lists only the steps in `done`:
 `<steps> of <last step>: <cycle titles>; <test count> tests`, for example
@@ -108,8 +131,17 @@ review diff small and every step reversible.
    prompt gives it, and never add a model suffix such as "(1M context)". Pre-commit hooks
    re-run on every amend, so get the message right the first time.
 5. Record `commit <short sha> <subject>`.
+6. Stop the chunk's orchestrators (`TaskStop`): every one this chunk started or resumed,
+   including any the `review` skill used for a fix round, even one that looks finished.
+   Then run `git status --short`. A change that shows up now is late work from an agent
+   that was still running: stop and show it to the user, and do not fold it into the next
+   chunk.
 
-If the orchestrator returned `checkpoint`, go back to step 3 for the next chunk.
+Never resume an orchestrator after its chunk is committed. A finished one carries the whole
+chunk's history into the next, and one that is still running keeps editing the tree after
+the commit, so its edits reach the next chunk's diff without the review that covered them.
+If the orchestrator returned `checkpoint`, go back to step 3 and start a new one for the
+next chunk.
 
 ## 5. Close the Session
 
@@ -123,5 +155,6 @@ and open the pull request, and `/clear` is safe because the ledger holds the sta
 To resume after `/clear` or in a new conversation, run `/start-session` again with the same
 spec path, or with no argument on the session's branch. The ledger and `git log` are the
 whole state; agent IDs from an earlier conversation do not survive, so never try to resume
-an orchestrator or phase agent by ID. Staged and unstaged work survives in the working tree;
-work that never reached disk is lost, so check `git status --short` first.
+an orchestrator or phase agent by ID. The user's answers survive as `answer` lines, and
+step 3 passes them to the new orchestrator. Staged and unstaged work survives in the
+working tree; work that never reached disk is lost, so check `git status --short` first.

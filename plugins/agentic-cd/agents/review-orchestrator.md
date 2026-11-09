@@ -42,7 +42,9 @@ Execution:
   are not agent types and fail. Never substitute
   a general-purpose agent for a reviewer
 - Wait until all four have returned before you aggregate. If one is still running,
-  wait for its result. Never return a partial aggregate, and never treat a missing
+  wait for its result. If you are resumed after returning early, do not spawn the
+  reviewers again: wait for the ones still running and aggregate all four. Never return
+  a partial aggregate, and never treat a missing
   reviewer as a pass. If a reviewer fails twice, return `block` with one finding whose
   `issue` names the reviewer that did not run
 - Every finding carries a `severity`. `blocking` means the agent named a concrete

@@ -1,7 +1,7 @@
 ---
 name: review
 description: Run the pre-commit review gate on the staged diff. Use when the user asks to review staged changes, run the review gate, or check whether changes are ready to commit, and when the TDD cycle reports it is done.
-allowed-tools: Read, Grep, Glob, Bash(git diff:*), Bash(git status:*), Bash(git add:*), Bash(*/scripts/review-diff.sh:*), Bash(*/scripts/ledger.sh:*), Agent(agentic-cd:review-orchestrator), Agent(agentic-cd:orchestrator)
+allowed-tools: Read, Grep, Glob, Bash(git diff:*), Bash(git status:*), Bash(git add:*), Bash(*/scripts/review-diff.sh:*), Bash(*/scripts/ledger.sh:*), Agent(agentic-cd:review-orchestrator), Agent(agentic-cd:orchestrator), SendMessage
 ---
 
 Run the pre-commit review gate. The gate is cheap only if it converges, so it runs in
@@ -43,10 +43,19 @@ ad hoc review: take the context from the conversation and skip every ledger step
    e. The diff: the file path from step 1 (or the text itself if it is under ~300 lines)
 3. Spawn the `review-orchestrator` subagent with only this assembled context.
    Do not pass the full session conversation or TDD agent history.
-4. `review-orchestrator` returns JSON. Parse the JSON directly; do not re-summarize
+4. Wait for its final JSON. If you are told it is still running, wait for its completion
+   notification. If it returns anything else, such as a note that the review is not
+   complete, a reviewer that is still running, or a partial aggregate, resume that same
+   `review-orchestrator` (`SendMessage` to its agent ID) and tell it to wait for its
+   reviewers and return the final JSON. The round is still in progress: do not spawn a new
+   review orchestrator, re-run `review-diff.sh`, or record a `review` line. A new one runs
+   all four reviewers again on the same diff, and a second `--delta` on an unchanged index
+   overwrites the diff file with an empty one, which passes. Only if the resume fails because the agent is gone,
+   spawn a new one with the same context and diff path, as the same round.
+5. `review-orchestrator` returns JSON. Parse the JSON directly; do not re-summarize
    its findings in prose. Record one `review` line: round number, mode, decision, and the
    count of blocking and advisory findings.
-5. If `decision` is `pass`, sort the `advisory` findings into two groups:
+6. If `decision` is `pass`, sort the `advisory` findings into two groups:
    - **Fix now**: cheap and inside the change's own scope. Docs or instructions that the
      diff made stale, dead code or parameters the diff left behind, and a missing test for
      behaviour the change states. Users asked for these to be fixed after nearly every gate,
@@ -56,7 +65,7 @@ ad hoc review: take the context from the conversation and skip every ledger step
    - **Defer**: hardening, design opinions, or anything outside the change's scope. Record
      each as a `defer` line; `/end-session` puts them in the pull request description
    Tell the user which group each advisory went into, in one line each.
-6. If `decision` is `block`, triage the `blocking` findings before routing anything:
+7. If `decision` is `block`, triage the `blocking` findings before routing anything:
    - Check each against the code or the platform's documented behaviour. A finding whose
      `failure_scenario` does not hold is dropped and recorded as a `risk` line
    - A finding that needs a product decision (naming, scope, a trade-off the user has not
@@ -66,10 +75,10 @@ ad hoc review: take the context from the conversation and skip every ledger step
      for routing back to the TDD phase agents. One fix round per gate round, never one per
      finding
    Then stage the fixes and go back to step 1 with `--delta`.
-7. Stop after round 3. If round 3 still blocks, do not loop again: report the remaining
+8. Stop after round 3. If round 3 still blocks, do not loop again: report the remaining
    blocking findings to the user and let them decide. Three blocked rounds in a row mean
    the fixes are going in without a check against the real runtime (production build,
    end-to-end run), or the findings need a decision only the user can make.
-8. When the final round passes and no fix-now round is pending, run
+9. When the final round passes and no fix-now round is pending, run
    `review-diff.sh --mark-pass`. That records the exact tree the gate passed; the caller
    commits only if `review-diff.sh --check-pass` still matches. You do not commit.

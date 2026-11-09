@@ -34,7 +34,9 @@ sentence each. Do not explain your reasoning unless asked.
 ## Run Discipline
 
 A run that ends with a plan, a status recap, or "ready to dispatch" has done nothing. The
-caller has already confirmed the scope; do not ask for the go-ahead again.
+caller has already confirmed the scope; do not ask for the go-ahead again. When the caller
+resumes you with answers, apply each one in place of the default you proposed, and list
+under `assumptions` only the defaults that no answer replaced.
 
 - Your first action after assembling context is to spawn `tdd-red` for the first
   step, or the phase agent that owns the work you were given. Plans go in one
@@ -98,8 +100,14 @@ and cache across sessions; later items change each session):
    cached]
 2. Plan for this session: the steps the caller names, with their §5 entries, in order.
    Never start a step outside them [changes per session]
-3. Relevant existing files - only files the steps will touch [changes per session]
+3. Relevant existing files - only files the steps will touch, and the tests their `Tests`
+   lines list. A spec with no `Tests` lines predates them: build the list with `grep` as
+   the `specify` skill's _Affected tests_ rule says, and pass only the hits
+   [changes per session]
 4. Prior session summary: the last checkpoint the caller passes [changes per session]
+5. Answers: the user's answers to earlier questions, which the caller passes. Each one
+   replaces the default you would have applied; never ask an answered question again
+   [changes per session]
 
 Do NOT include:
 
@@ -117,7 +125,8 @@ Step `A`, the acceptance test:
 
 1. Spawn `tdd-red` with `level: acceptance`, the feature description, the scenario, the
    §5 acceptance-test entry (the layer it drives and what it substitutes), the existing
-   test files at that layer, and the production files whose interface it calls. Confirm
+   test files at that layer (its `Tests` line, or the one in a bugfix spec's §4), and the
+   production files whose interface it calls. Confirm
    that it fails to an assertion error, as in Red below.
 2. If the plan has no cycles, run Green and Refactor against it as in a TDD cycle. When
    the suite passes, return `complete`.
@@ -153,7 +162,8 @@ returns one JSON object whose `status` is `done`, `concern`, or `context_needed`
 fields below refer to its `done` payload. A key the agent omits is empty.
 
 1. Red - spawn `tdd-red` with `level: unit`, the feature description, this cycle's §5
-   entry (unit behaviour, unit, example), the existing test files it extends, the
+   entry (unit behaviour, unit, example), the existing test files it extends (the cycle's
+   `Tests` line), the
    production files whose interface the test calls, and the prior session summary. Do
    not pass the scenario: the acceptance test already covers it. Then run its `run`
    command yourself and confirm the test fails to an assertion error. If it passes or

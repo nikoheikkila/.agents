@@ -155,6 +155,7 @@ sequenceDiagram
 1. **Specify.** The human runs `/specify` to create and refine the spec artifacts: the intent, the BDD scenarios, the
    feature description, and the acceptance criteria. A spec holds exactly one scenario, which becomes the
    acceptance test of the ATDD loop. The human then approves a plan of at most six TDD cycles that make it pass.
+   Each step lists the existing tests it affects, found with `grep`.
 2. **Start the session.** The human runs `/start-session` to start working on the spec. The main agent commits the
    spec, creates the branch, and begins the chunk loop.
 3. **Gather context.** The main agent invokes `orchestrator`, which assembles the minimum context for the chunk: the
@@ -173,7 +174,7 @@ sequenceDiagram
 9. **Fix findings.** If there are blocking findings, the main agent triages them and delegates them to the
    orchestrator, which fixes them in TDD cycles. A delta review follows, at most three rounds in total. When the gate
    passes, the cheap in-scope advisories are fixed, the rest are deferred to the pull request, and the main agent
-   commits the chunk and starts the next one.
+   commits the chunk, stops that chunk's orchestrators, and starts the next chunk with a new one.
 10. **Human review.** Once the acceptance test passes and is committed, the human reviews and tests the outcome.
 11. **End the session.** The human runs `/end-session`, which pushes the changes and opens the pull request.
 12. **Watch the pipeline.** The main agent monitors the CI/CD pipeline. If it fails, it runs `/fix`, which classifies the
@@ -221,7 +222,11 @@ passed.
   crosses the real boundary, and the plan puts the cycle that meets it early. Facts only the real environment shows are cheaper to meet
   there than as a blocking finding.
 - An orchestrator run is a chunk of at most three TDD cycles that ends in a JSON checkpoint. `/start-session`
-  checks it with `git status --short` and the test command, then gates and commits it before the next chunk.
+  checks each claim against the files (`git status --short`, the tests and the acceptance marker it names, and the
+  test command's exit code), then gates and commits the chunk and stops its orchestrators. Answers the user gives
+  go into the ledger and on to every orchestrator that is resumed or started after them.
+- A `review-orchestrator` that returns before all four reviewers finish is resumed, not replaced. A replacement
+  repeats the round, and a second `--delta` on the same index produces an empty diff.
 
 They are plugin agents, so their types are namespaced (`agentic-cd:tdd-red`, and so on), and the
 `Agent(...)` allowlists in their frontmatter use those names.

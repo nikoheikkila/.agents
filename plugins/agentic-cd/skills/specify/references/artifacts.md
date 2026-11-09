@@ -87,11 +87,13 @@ and commits each chunk. Six cycles at most.
 
 - Drives: <the outermost layer the repo tests at, such as the HTTP API through the test client>
 - Substitutes: <test doubles at the edge, or "none">
+- Tests: <existing test files at that layer, found with grep, or "none (grep: <pattern>)">
 - Closes: Done definition <n>; Test Case <n>
 
 ### Cycle 1: <unit behaviour in a few words>
 
 - Unit: <module, class, or function>. Touches: <files>
+- Tests: <existing test files that cover the touched files, found with grep, or "none (grep: <pattern>)">
 - Example: <input> → <expected output>
 - Closes: Done definition <n>; Test Case <n> (omit when none)
 
@@ -147,6 +149,8 @@ public API". Omit the section when there are none.>
 
 1. <The regression scenario passes.>
 2. <The existing suite stays green.>
+
+Tests: <existing test files that cover the code the bug is in, found with grep, or "none (grep: <pattern>)">
 
 ## Decision log
 
@@ -227,7 +231,8 @@ limit, B → 200), Latency Budget (< 5 ms).
 **TDD cycle plan**
 
 - Acceptance test: drives `/api/search` through the app's HTTP test client, with the real
-  middleware chain and the Redis test instance. Closes criterion 1 and Limit Reached.
+  middleware chain and the Redis test instance. Tests: `tests/api/test_search.py`, the one
+  file `grep -rl '/api/search' tests/` finds. Closes criterion 1 and Limit Reached.
 - Cycle 1, _Count requests per client_: `RequestCounter` over Redis. Example: client A
   increments three times and B once → A = 3, B = 1. Closes criterion 4 and Per-Client
   Isolation. It goes first because it meets Redis.
@@ -239,6 +244,10 @@ limit, B → 200), Latency Budget (< 5 ms).
 - Cycle 4, _Reject with 429_: the middleware, registered between authentication and the
   search handler. Example: a denied check → 429 with `Retry-After: 20`. This cycle makes
   the acceptance test pass. Closes criterion 5 and Latency Budget.
+
+Cycles 1 to 3 build new units, so each `Tests` line reads
+`none (grep: RequestCounter|RateLimiter)`. Cycle 4 changes the middleware chain, and grep
+finds `tests/api/test_search.py` for it, the same file the acceptance test joins.
 
 Why this passes the gate: every criterion is observable from outside the code. The
 escalation triggers name the two decisions the human had not yet made. The hypothesis
