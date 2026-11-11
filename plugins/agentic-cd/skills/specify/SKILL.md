@@ -1,6 +1,6 @@
 ---
 name: specify
-description: Interactively co-write the spec for the next small change before any code exists - intent with a testable hypothesis, one BDD scenario as the acceptance test, feature description, acceptance criteria, and a plan of TDD cycles - then validate it and write it out for the orchestrator. Use when the user asks to specify, spec out, or write a spec, requirements, or acceptance criteria for a feature or change; wants a spec broken into TDD cycles or smaller chunks, or says it is too big to implement; wants Gherkin or BDD scenarios drafted from an idea; wants an intent, user story, or hypothesis sharpened; has a vague idea and wants to be interviewed before building; or asks whether a spec is ready for implementation. Also use for a bug report that needs a regression scenario before the fix, and before `/start-session` on any change without a spec. Not for implementing code, writing tests from a feature file (tdd-red), or reviewing a diff (review).
+description: Interactively co-write the spec for the next small change before any code exists - intent with a testable hypothesis, one BDD scenario as the acceptance test, feature description, acceptance criteria, and a plan of TDD cycles - then validate it and write it out for the orchestrator. Use when the user asks to specify, spec out, or write a spec, requirements, or acceptance criteria for a feature or change; wants a spec broken into TDD cycles or smaller chunks, or says it is too big to implement; wants Gherkin or BDD scenarios drafted from an idea; wants an intent, user story, or hypothesis sharpened; has a vague idea and wants to be interviewed before building; or asks whether a spec is ready for implementation. Also use for a bug report that needs a regression scenario before the fix, and before `/start-session` on any change without a spec. Not for implementing code, writing tests from a feature file, or reviewing a diff.
 ---
 
 # Specify
@@ -206,7 +206,7 @@ and the human approves it.
   For the acceptance test, search for the layer's entry point instead, such as the route,
   the command, or the component. List every hit. When there are none, write
   `none (grep: <pattern>)`, so a reader can tell an empty result from a skipped search. The
-  orchestrator hands this list to `tdd-red` as the tests to extend, and a guessed list
+  orchestrator hands this list to `software-engineer` as the tests to extend, and a guessed list
   misses the test that imports the module through a re-export or lives in an unexpected
   directory.
 
@@ -272,16 +272,16 @@ Before anyone generates a test or writes code, review all four artifacts and the
 plan together. Each one can look fine alone and still contradict the others. Report each
 check as `pass` or with numbered findings:
 
-| Check            | Question                                                                                            |
-| ---------------- | --------------------------------------------------------------------------------------------------- |
-| Clarity          | Could two developers read the intent differently?                                                   |
-| Testability      | Does the scenario have a clear, observable outcome?                                                 |
-| Scope            | Does the feature description constrain the work to what the intent needs, without over-engineering? |
-| Terminology      | Is each concept named the same way in all four artifacts?                                           |
-| Completeness     | Does the intent imply any behaviour that is neither the scenario nor a _Later slices_ entry?        |
-| Conflict         | Does anything in one artifact contradict another?                                                   |
-| Hypothesis       | Is there a way to validate it after deployment, using data that will exist?                         |
-| Self-containment | Could an agent implement from these documents alone, with no questions?                             |
+| Check            | Question                                                                                                                                                                                                                                                                     |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Clarity          | Could two developers read the intent differently?                                                                                                                                                                                                                            |
+| Testability      | Does the scenario have a clear, observable outcome?                                                                                                                                                                                                                          |
+| Scope            | Does the feature description constrain the work to what the intent needs, without over-engineering?                                                                                                                                                                          |
+| Terminology      | Is each concept named the same way in all four artifacts?                                                                                                                                                                                                                    |
+| Completeness     | Does the intent imply any behaviour that is neither the scenario nor a _Later slices_ entry?                                                                                                                                                                                 |
+| Conflict         | Does anything in one artifact contradict another?                                                                                                                                                                                                                            |
+| Hypothesis       | Is there a way to validate it after deployment, using data that will exist?                                                                                                                                                                                                  |
+| Self-containment | Could an agent implement from these documents alone, with no questions?                                                                                                                                                                                                      |
 | Cycle plan       | Is there exactly one scenario? Does the acceptance test name its layer, does every step have a `Tests` line built with `grep`, does each cycle have one example with a known-good output, are there at most six cycles, and does the last one make the acceptance test pass? |
 
 The human gates on this review. Resolve all findings through the critique cycle; the
@@ -296,7 +296,7 @@ When the gate passes:
 
 1. Finalize `specs/<slug>.md` from the template, and set `Status: ready`.
 2. Write `feature/<slug>.feature` with the one approved scenario. This is the file
-   `agentic-cd:tdd-red` reads. The spec links to it and does not repeat it, so the two can't drift apart.
+   `agentic-cd:software-engineer` reads. The spec links to it and does not repeat it, so the two can't drift apart.
 3. If the project already uses a different convention (`features/`, `docs/specs/`, and so
    on), follow it and tell the human.
 

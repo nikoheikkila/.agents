@@ -63,8 +63,8 @@ skills live here now). Everything is invoked as `/agentic-cd:<name>`, and the ba
 
 - Commands: `start-session`, `end-session`, `fix`, `reflect`.
 - Skills: `specify`, `review`, `gherkin`, `mutation-testing` (called by `/end-session`), and the TDD phase skills
-  `tdd-red`, `tdd-green`, `tdd-refactor` (preloaded by the phase agents; `/agentic-cd:tdd-red` etc., formerly `/tdd:red`).
-- Agents: `orchestrator`, `tdd-red`, `tdd-green`, `tdd-refactor`, `review-orchestrator`, `semantic-review`,
+  `tdd-red`, `tdd-green`, `tdd-refactor` (preloaded by the `orchestrator` agent).
+- Agents: `orchestrator`, `software-engineer`, `review-orchestrator`, `semantic-review`,
   `security-review`, `performance-review`, `concurrency-review`.
 
 The sections below describe each part. Paths such as `commands/start-session.md` are relative to
@@ -82,7 +82,7 @@ The commands here drive the agentic-CD pipeline in `agents/`, starting from a sp
 skill:
 
 - `commands/start-session.md` → `/start-session <spec | #issue | bug>` — commits the spec, creates the feature
-  branch, and loops: the `orchestrator` runs up to three `tdd-red` → `tdd-green` → `tdd-refactor` cycles, `/review`
+  branch, and loops: the `orchestrator` runs `software-engineer` in multiple cycles, `/review`
   gates the chunk, and the chunk is committed. A bug report without a spec goes through `specify`'s bugfix mode
   first.
 - `commands/end-session.md` → `/end-session` — checks that everything is committed and the base pipeline is green,
@@ -161,12 +161,11 @@ sequenceDiagram
 3. **Gather context.** The main agent invokes `orchestrator`, which assembles the minimum context for the chunk: the
    feature description, the next one to three steps of the plan (the acceptance test or a TDD cycle), the files
    they touch, and the prior checkpoint.
-4. **Red.** In the first chunk, `tdd-red` writes the failing acceptance test for the scenario, and the
-   orchestrator marks it strictly expected-to-fail. In each cycle, `tdd-red` writes one failing unit test.
-5. **Green.** The orchestrator runs the test itself and confirms it fails on an assertion, then invokes `tdd-green` to
-   make it pass with the minimum code.
-6. **Refactor.** The orchestrator confirms the suite is passing, then invokes `tdd-refactor` to clean the code up. It
-   repeats steps 4–6 for each cycle, up to three steps per chunk, then returns a checkpoint to the main agent. When
+4. **Red.** In the first chunk, `software-engineer` writes the failing acceptance test for the scenario, and the
+   orchestrator marks it strictly expected-to-fail. In each cycle, `software-engineer` writes one failing unit test.
+5. **Green.** The software engineer runs the test itself and confirms it fails on an assertion, then makes it pass with the minimum code.
+6. **Refactor.** The software engineer confirms the suite is passing, then cleans the code up. It
+   repeats steps 4–6 for each cycle, then returns a checkpoint to the main agent. When
    a cycle makes the acceptance test pass, its marker trips and is removed, and the spec is done.
 7. **Review gate.** The main agent runs `/review`, which delegates to `review-orchestrator`.
 8. **Parallel review.** `review-orchestrator` invokes `security-review`, `performance-review`, `semantic-review`, and
@@ -182,24 +181,17 @@ sequenceDiagram
 
 ## Subagents
 
-`plugins/agentic-cd/agents/` holds a nine-agent pre-commit pipeline adapted from the
+`plugins/agentic-cd/agents/` holds a seven-agent pre-commit pipeline adapted from the
 [MinimumCD agentic-CD guide](https://beyond.minimumcd.org/docs/agentic-cd/architecture/agent-configuration/).
 `orchestrator` is the entry point — ask it to start working on an implementation from a plan,
 and it assembles the minimum context, writes the spec's acceptance test, and runs the planned TDD cycles until it
-passes:
+passes.
 
-| Agent          | Phase                                         | Model  | Effort |
-| -------------- | --------------------------------------------- | ------ | ------ |
-| `tdd-red`      | Write one failing acceptance or unit test     | sonnet | low    |
-| `tdd-green`    | Write the minimum code to make it pass        | opus   | high   |
-| `tdd-refactor` | Simplify the design while keeping tests green | opus   | medium |
-
-Each phase agent returns one minimal JSON object — `status` (`done`, `concern`, or `context_needed`) plus
-repo-relative paths and the test command, never file contents or logs — so the orchestrator's context stays small.
 The orchestrator never edits a file itself: tests and behaviour go through the three phase agents, and anything
 else (config, manifests, docs) goes to a `general-purpose` subagent. Its Bash use is limited to running tests and git.
-Between phases the orchestrator re-runs each agent's test command itself, reading only the exit code and a short tail, and it hashes the Red test files so a
-later phase that edits a test is caught and re-run. The phase agents preload the matching `agentic-cd` skill, which ship in the same plugin.
+
+Between phases the orchestrator re-runs each agent's test command itself, reading only the exit code and a short tail,
+and it hashes the Red test files so a later phase that edits a test is caught and re-run. The phase agents preload the matching `agentic-cd` skill, which ship in the same plugin.
 
 After each chunk of up to three steps the orchestrator stops at the review gate rather than crossing it:
 `/start-session` runs `/review`, which invokes `review-orchestrator`, which runs `semantic-review`, `security-review`,
@@ -228,7 +220,7 @@ passed.
 - A `review-orchestrator` that returns before all four reviewers finish is resumed, not replaced. A replacement
   repeats the round, and a second `--delta` on the same index produces an empty diff.
 
-They are plugin agents, so their types are namespaced (`agentic-cd:tdd-red`, and so on), and the
+They are plugin agents, so their types are namespaced (`agentic-cd:orchestrator`, and so on), and the
 `Agent(...)` allowlists in their frontmatter use those names.
 
 Only `orchestrator` is meant to be invoked directly; the other eight expect a context bundle from their parent

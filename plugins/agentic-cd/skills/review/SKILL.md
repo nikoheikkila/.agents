@@ -1,7 +1,7 @@
 ---
 name: review
 description: Run the pre-commit review gate on the staged diff. Use when the user asks to review staged changes, run the review gate, or check whether changes are ready to commit, and when the TDD cycle reports it is done.
-allowed-tools: Read, Grep, Glob, Bash(git diff:*), Bash(git status:*), Bash(git add:*), Bash(*/scripts/review-diff.sh:*), Bash(*/scripts/ledger.sh:*), Agent(agentic-cd:review-orchestrator), Agent(agentic-cd:orchestrator), SendMessage
+allowed-tools: Read, Grep, Glob, Bash(git diff:*), Bash(git status:*), Bash(git add:*), Bash(*/scripts/review-diff.sh*), Bash(*/scripts/ledger.sh *), Agent(agentic-cd:review-orchestrator), Agent(agentic-cd:orchestrator), SendMessage
 ---
 
 Run the pre-commit review gate. The gate is cheap only if it converges, so it runs in
@@ -69,10 +69,10 @@ ad hoc review: take the context from the conversation and skip every ledger step
    - Check each against the code or the platform's documented behaviour. A finding whose
      `failure_scenario` does not hold is dropped and recorded as a `risk` line
    - A finding that needs a product decision (naming, scope, a trade-off the user has not
-     made) goes to the user as one batched question with a recommended default, not to the
-     TDD agents. Record a decision to live with it as a `risk` line
+     made) goes to the user as one batched question with a recommended default, not to
+     `software-engineer`. Record a decision to live with it as a `risk` line
    - Pass the rest, grouped by file and only the findings, to the `orchestrator` subagent
-     for routing back to the TDD phase agents. One fix round per gate round, never one per
+     for routing to `software-engineer`. One fix round per gate round, never one per
      finding
    Then stage the fixes and go back to step 1 with `--delta`.
 8. Stop after round 3. If round 3 still blocks, do not loop again: report the remaining

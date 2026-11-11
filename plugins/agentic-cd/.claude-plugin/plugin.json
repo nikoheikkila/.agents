@@ -1,6 +1,6 @@
 {
   "name": "agentic-cd",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "Agentic continuous-delivery workflow: specify one scenario, implement it in reviewed TDD chunks, gate each commit, then push and open the pull request.",
   "author": {
     "name": "Niko Heikkilä",

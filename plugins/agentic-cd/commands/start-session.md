@@ -2,14 +2,14 @@
 description: Start or resume an implementation session from a ready spec - branch, TDD chunks, review gate, and one commit per chunk.
 argument-hint: "<specs/slug.md | #issue | bug description>"
 disable-model-invocation: true
-allowed-tools: Read, Grep, Glob, Edit, Skill(agentic-cd:specify), Skill(agentic-cd:review), Agent(agentic-cd:orchestrator), SendMessage, TaskStop, Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(git switch:*), Bash(git rev-parse:*), Bash(git symbolic-ref:*), Bash(gh issue view:*), Bash(*/scripts/ledger.sh:*), Bash(*/scripts/review-diff.sh:*), Bash(task:*)
+allowed-tools: Read, Grep, Glob, Edit, Skill(agentic-cd:specify), Skill(agentic-cd:review), Agent(agentic-cd:orchestrator), SendMessage, TaskStop, Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(git switch:*), Bash(git rev-parse:*), Bash(git symbolic-ref:*), Bash(gh issue view:*), Bash(*/scripts/ledger.sh *), Bash(*/scripts/review-diff.sh*), Bash(task:*)
 ---
 
 Start or resume an implementation session. Input: $ARGUMENTS
 
 You own the session loop: chunk, review gate, commit, repeat. The `orchestrator` owns
-context assembly and the TDD phase agents. Do not invoke `tdd-red`, `tdd-green`, or
-`tdd-refactor` directly, and never commit work the gate has not passed.
+context assembly and routes each step to `software-engineer`. Do not invoke `software-engineer` directly,
+and never commit work the gate has not passed.
 
 The scripts live in the review skill's directory: `${CLAUDE_PLUGIN_ROOT}/skills/review/scripts/` (if that variable is not expanded, `../skills/review/scripts/` relative to this file).
 `ledger.sh` is the session's memory. Record each step in it as it happens, never from
@@ -81,7 +81,7 @@ It returns a checkpoint after at most three steps. If the checkpoint arrives whi
 agent is still running (its `done` is empty, or the files it lists are not in
 `git status --short`), wait for that agent's completion notification before you verify or
 re-dispatch anything. If a run ends with a plan instead of finished work, resume it with
-the same answers and the confirmation, and tell it to dispatch `tdd-red` now; do not
+the same answers and the confirmation, and tell it to dispatch `software-engineer` now; do not
 re-explain the scope.
 
 Check the report against the files before you record anything. A checkpoint is a claim,

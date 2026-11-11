@@ -1,17 +1,16 @@
 ---
 description: Enter pipeline-restore mode and repair a red pipeline with minimum context. Use when the remote CI pipeline fails after a push, when /end-session reports a red run, or when a test, build, or pipeline stage fails mid-session for a reason outside the current chunk and must go green before new work.
 argument-hint: "[run URL | run id | failing command | failing test]"
-allowed-tools: Read, Grep, Glob, Skill(agentic-cd:review), Agent(agentic-cd:orchestrator), Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(git push:*), Bash(git rev-parse:*), Bash(git remote get-url:*), Bash(gh run list:*), Bash(gh run view:*), Bash(gh run watch:*), Bash(gh run rerun:*), Bash(*/scripts/ledger.sh:*), Bash(*/scripts/review-diff.sh:*)
+allowed-tools: Read, Grep, Glob, Skill(agentic-cd:review), Agent(agentic-cd:orchestrator), Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(git push:*), Bash(git rev-parse:*), Bash(git remote get-url:*), Bash(gh run list:*), Bash(gh run view:*), Bash(gh run watch:*), Bash(gh run rerun:*), Bash(*/scripts/ledger.sh *), Bash(*/scripts/review-diff.sh*)
 ---
 
 Enter pipeline-restore mode. Load minimum context only. Failure to restore: $ARGUMENTS
 
-You own the restore loop. The `orchestrator` owns routing the fix to a phase agent; do not
-invoke `tdd-green` or `general-purpose` directly. The scripts are in
-`${CLAUDE_PLUGIN_ROOT}/skills/review/scripts/` (if that variable is not expanded, `../skills/review/scripts/` relative to this file). If `ledger.sh find` names a session, record each step
-in it.
+You own the restore loop. The `orchestrator` owns routing the fix to `software-engineer`; do not
+invoke `software-engineer` directly.
 
 1. **Identify the failure.** Resolve the run from the argument:
+
    - **A workflow run URL** (`https://github.com/<owner>/<repo>/actions/runs/<run id>`,
      optionally followed by `/job/<job id>` or `/attempts/<n>`): take the run id, and the
      job id when present. If `<owner>/<repo>` is not this repository's `origin`
@@ -27,6 +26,7 @@ in it.
    `--job <job id>` in place of `<id>` when the URL named a job. Read the last 80 lines and
    grep for the first error. For a local failure, rerun the named command the same way.
    Name the stage, the failing command, and the first error line.
+
 2. **Classify it** as exactly one of:
    - `test`: a failing assertion
    - `build`: a compile, type, or bundling error in the code
