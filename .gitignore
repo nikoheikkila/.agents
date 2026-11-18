@@ -8,6 +8,7 @@
 !/plugins
 !/.claude-plugin
 !/scripts
+!/commands
 
 !/settings.json
 !/policy-limits.json
